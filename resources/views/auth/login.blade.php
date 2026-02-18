@@ -22,8 +22,11 @@
 
         body {
             font-family: 'Nunito', sans-serif;
-            background-color: #f4f6f9;
-            /* Fondo claro para que resalte la tarjeta */
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+            url("{{ asset('images/fondoLogin.png') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             height: 100vh;
             display: flex;
             align-items: center;

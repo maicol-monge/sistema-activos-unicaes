@@ -32,25 +32,25 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
-    // ADMIN
     Route::middleware('role:ADMIN')->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
         // aquí luego pones tu CRUD Users
     });
 
-    // INVENTARIADOR
     Route::middleware('role:INVENTARIADOR')->group(function () {
         Route::get('/inventario', fn() => 'Inventario')->name('inventario.index');
     });
 
-    // ENCARGADO
     Route::middleware('role:ENCARGADO')->group(function () {
         Route::get('/mis-activos', fn() => 'Mis activos')->name('activos.mis');
     });
 
-    // DECANO
     Route::middleware('role:DECANO')->group(function () {
         Route::get('/reportes', fn() => 'Reportes')->name('reportes.index');
+    });
+
+    Route::middleware(['auth', 'role:ADMIN,INVENTARIADOR'])->group(function () {
+        Route::resource('encargados', EncargadoController::class)->except(['show']);
     });
 });
 
