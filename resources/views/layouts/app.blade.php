@@ -92,11 +92,6 @@
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('dashboard') }}">
-                            <i class="fa-solid fa-chart-pie me-1"></i> Dashboard
-                        </a>
-                    </li>
 
                     @if(auth()->user()->rol === 'ADMIN')
                     <li class="nav-item">
@@ -129,6 +124,15 @@
                         </a>
                     </li>
                     @endif
+
+                    @if(in_array(auth()->user()->rol, ['ADMIN','INVENTARIADOR']))
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('encargados.index') }}">
+                            <i class="fa-solid fa-user-tie me-1"></i> Encargados
+                        </a>
+                    </li>
+                    @endif
+
                 </ul>
 
                 <div class="d-flex align-items-center text-white">
