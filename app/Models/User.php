@@ -17,6 +17,11 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+
+    protected $primaryKey = 'id_usuario';
+    public $incrementing = true;
+    protected $keyType = 'int';
+
     protected $fillable = [
         'nombre',
         'correo',
@@ -46,5 +51,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'contrasena' => 'hashed',
         ];
+    }
+
+    public function getAuthPassword()
+    {
+        return $this->contrasena;
     }
 }
