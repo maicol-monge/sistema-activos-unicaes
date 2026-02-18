@@ -34,7 +34,6 @@
             margin: 0;
         }
 
-        /* Estilos de la tarjeta de Login */
         .login-card {
             width: 100%;
             max-width: 400px;
@@ -43,7 +42,6 @@
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             border-top: 6px solid var(--rojo-principal);
-            /* Detalle institucional superior */
         }
 
         .login-header {
@@ -58,7 +56,6 @@
             letter-spacing: -0.5px;
         }
 
-        /* Personalización de los inputs de Bootstrap */
         .form-control:focus {
             border-color: var(--dorado);
             box-shadow: 0 0 0 0.25rem rgba(237, 189, 63, 0.25);
@@ -78,13 +75,11 @@
             border-color: var(--dorado);
         }
 
-        /* Personalización del Checkbox */
         .form-check-input:checked {
             background-color: var(--rojo-principal);
             border-color: var(--rojo-principal);
         }
 
-        /* Botón de Entrar */
         .btn-login {
             background-color: var(--rojo-principal);
             color: white;

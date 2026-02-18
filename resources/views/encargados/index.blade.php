@@ -5,7 +5,6 @@
 @section('content')
 
 <style>
-    /* Botón de creación principal */
     .btn-nuevo {
         background-color: var(--dorado);
         color: var(--rojo-oscuro);
@@ -21,7 +20,6 @@
         box-shadow: 0 4px 10px rgba(237, 189, 63, 0.4);
     }
 
-    /* Estilos de la tabla institucional */
     .table-custom th {
         background-color: var(--rojo-principal);
         color: var(--dorado);
@@ -37,10 +35,8 @@
 
     .table-custom tbody tr:hover {
         background-color: #fdfaf3;
-        /* Tono sutil cálido al pasar el cursor */
     }
 
-    /* Insignia para el tipo de encargado */
     .badge-tipo {
         background-color: rgba(237, 189, 63, 0.15);
         color: var(--rojo-oscuro);
