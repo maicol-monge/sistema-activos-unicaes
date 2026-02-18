@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivoController;
 use App\Http\Controllers\AsignacionActivoController;
@@ -25,9 +26,32 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth');
 
 // Ruta protegida de prueba (dashboard)
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->name('dashboard')->middleware('auth');
+Route::middleware('auth')->group(function () {
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+
+    // ADMIN
+    Route::middleware('role:ADMIN')->group(function () {
+        Route::get('/users', fn() => 'Listado users')->name('users.index');
+        // aquí luego pones tu CRUD Users
+    });
+
+    // INVENTARIADOR
+    Route::middleware('role:INVENTARIADOR')->group(function () {
+        Route::get('/inventario', fn() => 'Inventario')->name('inventario.index');
+    });
+
+    // ENCARGADO
+    Route::middleware('role:ENCARGADO')->group(function () {
+        Route::get('/mis-activos', fn() => 'Mis activos')->name('activos.mis');
+    });
+
+    // DECANO
+    Route::middleware('role:DECANO')->group(function () {
+        Route::get('/reportes', fn() => 'Reportes')->name('reportes.index');
+    });
+});
 
 Route::resource('encargados', EncargadoController::class);
 Route::resource('categorias-activos', CategoriaActivoController::class);

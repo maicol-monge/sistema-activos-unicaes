@@ -1,20 +1,25 @@
-<!doctype html>
-<html lang="es">
+@extends('layouts.app')
 
-<head>
-    <meta charset="utf-8">
-    <title>Dashboard</title>
-</head>
+@section('title', 'Dashboard')
 
-<body>
-    <h1>Dashboard</h1>
+@section('content')
+<h1>Dashboard</h1>
 
-    <p>Bienvenido: {{ auth()->user()->name ?? auth()->user()->email }}</p>
+@php $rol = auth()->user()->rol; @endphp
 
-    <form method="POST" action="{{ route('logout') }}">
-        @csrf
-        <button type="submit">Cerrar sesión</button>
-    </form>
-</body>
+@if($rol === 'ADMIN')
+<p>Panel de administración: gestión de usuarios, encargados, etc.</p>
 
-</html>
+@elseif($rol === 'INVENTARIADOR')
+<p>Panel de inventariador: registro y gestión de activos.</p>
+
+@elseif($rol === 'ENCARGADO')
+<p>Panel de encargado: ver activos asignados y su estado.</p>
+
+@elseif($rol === 'DECANO')
+<p>Panel de decano: reportes y consultas.</p>
+
+@else
+<p>Rol no reconocido.</p>
+@endif
+@endsection
