@@ -141,9 +141,9 @@
                         </span>
                     </div>
 
-                    <form method="POST" action="{{ route('logout') }}" class="m-0">
+                    <form method="POST" action="{{ route('logout') }}" class="m-0 logout-form">
                         @csrf
-                        <button type="submit" class="btn btn-sm btn-salir">
+                        <button type="button" class="btn btn-sm btn-salir btn-logout">
                             <i class="fa-solid fa-right-from-bracket"></i> Salir
                         </button>
                     </form>
@@ -162,6 +162,71 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @php
+    $firstError = $errors->first();
+    @endphp
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const ok = @json(session('ok'));
+            const err = @json(session('err'));
+            const firstError = @json($firstError);
+
+            if (ok) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: ok,
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            }
+
+            if (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err,
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            }
+
+            if (firstError) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: firstError,
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            }
+
+            document.querySelectorAll('.btn-logout').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: '¿Cerrar sesión?',
+                        text: '¿Estás seguro que deseas cerrar la sesión?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Sí, cerrar sesión',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            const form = btn.closest('form');
+                            if (form) form.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
 </body>
 
 </html>

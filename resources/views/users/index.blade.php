@@ -51,13 +51,6 @@
     </a>
 </div>
 
-@if(session('ok'))
-<div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #198754;">
-    <i class="fa-solid fa-circle-check me-2"></i> {{ session('ok') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
-
 @if(session('err'))
 <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #dc3545;">
     <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ session('err') }}
@@ -65,7 +58,7 @@
 </div>
 @endif
 
-<div class="table-responsive bg-white rounded-3 shadow-sm border overflow-hidden">
+<div class="table-responsive bg-white rounded-3 shadow-sm border overflow-auto" style="overflow-x:auto;">
     <table class="table table-custom table-hover mb-0">
         <thead>
             <tr>
@@ -113,10 +106,10 @@
                             <i class="fa-solid fa-pen" style="color: var(--dorado);"></i>
                         </a>
 
-                        <form method="POST" action="{{ route('users.destroy', $u) }}" style="display:inline;">
+                        <form method="POST" action="{{ route('users.destroy', $u) }}" class="d-inline delete-user-form">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-light border text-danger" title="Eliminar" onclick="return confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')">
+                            <button type="button" class="btn btn-sm btn-light border text-danger btn-delete-user" title="Eliminar" data-name="{{ $u->nombre }}">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </form>
@@ -138,5 +131,32 @@
 <div class="d-flex justify-content-end mt-4">
     {{ $users->links() }}
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.btn-delete-user');
+            if (!btn) return;
+            e.preventDefault();
+            const name = btn.dataset.name || 'este usuario';
+            const form = btn.closest('form');
+
+            Swal.fire({
+                title: '¿Eliminar usuario?',
+                text: `¿Estás seguro de que deseas eliminar a ${name}? Esta acción no se puede deshacer.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (form) form.submit();
+                }
+            });
+        });
+    });
+</script>
 
 @endsection

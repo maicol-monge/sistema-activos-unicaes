@@ -57,21 +57,6 @@
 <div class="card shadow-sm border-0" style="border-top: 4px solid var(--dorado); border-radius: 8px;">
     <div class="card-body p-4">
 
-        @if ($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-left: 4px solid #842029;">
-            <div class="d-flex align-items-center mb-2">
-                <i class="fa-solid fa-triangle-exclamation me-2 fs-5"></i>
-                <strong>Por favor, corrige los siguientes errores:</strong>
-            </div>
-            <ul class="mb-0">
-                @foreach ($errors->all() as $e)
-                <li>{{ $e }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        @endif
-
         <form method="POST" action="{{ route('users.update', $user) }}">
             @csrf
             @method('PUT')
