@@ -5,7 +5,6 @@
 @section('content')
 
 <style>
-    /* Estilos consistentes con el resto del sistema */
     .form-control:focus,
     .form-select:focus {
         border-color: var(--dorado);
@@ -34,7 +33,6 @@
         background-image: none;
     }
 
-    /* Botón Actualizar */
     .btn-actualizar {
         background-color: var(--rojo-principal);
         color: white;

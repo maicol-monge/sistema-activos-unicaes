@@ -5,7 +5,6 @@
 @section('content')
 
 <style>
-    /* Estilos para los campos del formulario */
     .form-control:focus,
     .form-select:focus {
         border-color: var(--dorado);
@@ -33,10 +32,8 @@
     .form-select.is-invalid {
         border-color: #dc3545;
         background-image: none;
-        /* Quitamos el icono de exclamación por defecto de Bootstrap para que no pise el nuestro */
     }
 
-    /* Botón Guardar */
     .btn-guardar {
         background-color: var(--rojo-principal);
         color: white;
