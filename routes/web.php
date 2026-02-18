@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivoController;
 use App\Http\Controllers\AsignacionActivoController;
@@ -33,7 +34,7 @@ Route::middleware('auth')->group(function () {
 
     // ADMIN
     Route::middleware('role:ADMIN')->group(function () {
-        Route::get('/users', fn() => 'Listado users')->name('users.index');
+        Route::resource('users', UserController::class)->except(['show']);
         // aquí luego pones tu CRUD Users
     });
 
