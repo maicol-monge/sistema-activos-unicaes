@@ -17,4 +17,9 @@ class MovimientoActivo extends Model
         'fecha',
         'estado',
     ];
+
+    public function getRouteKeyName()
+    {
+        return 'id_movimiento';
+    }
 }

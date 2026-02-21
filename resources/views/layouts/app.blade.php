@@ -107,12 +107,22 @@
                             <i class="fa-solid fa-boxes-stacked me-1"></i> Inventario
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('asignaciones.index') }}">
+                            <i class="fa-solid fa-clipboard-list me-1"></i> Asignaciones
+                        </a>
+                    </li>
                     @endif
 
                     @if(auth()->user()->rol === 'ENCARGADO')
-                    <li class="nav-item">
+                    <!-- <li class="nav-item">
                         <a class="nav-link" href="{{ route('activos.mis') }}">
                             <i class="fa-solid fa-laptop me-1"></i> Mis Activos
+                        </a>
+                    </li> -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('asignaciones.mis') }}">
+                            <i class="fa-solid fa-inbox me-1"></i> Mis Asignaciones
                         </a>
                     </li>
                     @endif
