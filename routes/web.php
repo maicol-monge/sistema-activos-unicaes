@@ -39,10 +39,22 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:INVENTARIADOR')->group(function () {
         Route::get('/inventario', fn() => 'Inventario')->name('inventario.index');
+        Route::get('/asignaciones', [AsignacionActivoController::class, 'index'])
+            ->name('asignaciones.index');
+        Route::get('/asignaciones/create', [AsignacionActivoController::class, 'create'])->name('asignaciones.create');
+        Route::post('/asignaciones', [AsignacionActivoController::class, 'store'])->name('asignaciones.store');
     });
 
     Route::middleware('role:ENCARGADO')->group(function () {
         Route::get('/mis-activos', fn() => 'Mis activos')->name('activos.mis');
+        Route::get('/mis-asignaciones', [AsignacionActivoController::class, 'misAsignaciones'])
+            ->name('asignaciones.mis');
+
+        Route::post('/asignaciones/{asignacion}/aceptar', [AsignacionActivoController::class, 'aceptar'])
+            ->name('asignaciones.aceptar');
+
+        Route::post('/asignaciones/{asignacion}/rechazar', [AsignacionActivoController::class, 'rechazar'])
+            ->name('asignaciones.rechazar');
     });
 
     Route::middleware('role:DECANO')->group(function () {

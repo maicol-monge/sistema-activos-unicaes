@@ -18,4 +18,25 @@ class AsignacionActivo extends Model
         'fecha_respuesta',
         'estado',
     ];
+
+    public function activo()
+    {
+        return $this->belongsTo(\App\Models\Activo::class, 'id_activo', 'id_activo');
+    }
+
+    public function encargado()
+    {
+        return $this->belongsTo(\App\Models\Encargado::class, 'id_encargado', 'id_encargado');
+    }
+
+    public function usuarioAsignador()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'asignado_por', 'id_usuario');
+    }
+
+
+    public function getRouteKeyName()
+    {
+        return 'id_asignacion';
+    }
 }
