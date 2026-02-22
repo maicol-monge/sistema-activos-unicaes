@@ -57,3 +57,35 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+---------------------------------------------------------------------
+
+## Instalación del proyecto
+
+1. Clonar repositorio
+
+git clone https://github.com/usuario/sistema-activos-unicaes.git
+
+2. Entrar al proyecto
+
+cd sistema-activos-unicaes
+
+3. Instalar dependencias
+
+composer install
+
+4. Configurar entorno (Este paso ignoren si ya les he pasado el archivo completo .env)
+
+cp .env.example .env
+
+php artisan key:generate
+
+5. Ejecutar migraciones y seeders
+
+php artisan migrate:fresh --seed
+
+6. Ejecutar servidor
+
+php artisan serve
+
