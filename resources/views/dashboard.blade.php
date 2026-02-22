@@ -1,0 +1,154 @@
+@extends('layouts.app')
+
+@section('title', 'Dashboard - UNICAES')
+
+@section('content')
+
+<style>
+    .card-module {
+        transition: all 0.3s ease;
+        border: none;
+        border-bottom: 4px solid transparent;
+        border-radius: 10px;
+        background-color: white;
+    }
+
+    .card-module:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+        border-bottom: 4px solid var(--rojo-principal);
+    }
+
+    .icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(237, 189, 63, 0.15);
+        color: var(--rojo-oscuro);
+    }
+</style>
+
+@php $rol = auth()->user()->rol; @endphp
+
+<div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, var(--rojo-principal) 0%, var(--rojo-oscuro) 100%); border-radius: 12px;">
+    <div class="card-body p-4 p-md-5 d-flex align-items-center flex-wrap">
+        <div class="me-4 d-none d-md-block">
+            <i class="fa-solid fa-building-columns fa-4x" style="color: var(--dorado);"></i>
+        </div>
+        <div class="text-white">
+            <h2 class="fw-bold mb-1">¡Bienvenido, {{ auth()->user()->nombre }}!</h2>
+            <p class="mb-0" style="color: rgba(255,255,255,0.8);">Sistema de Control de Activos UNICAES</p>
+        </div>
+        <div class="ms-auto mt-3 mt-md-0">
+            <span class="badge fs-6 py-2 px-3 shadow-sm" style="background-color: var(--dorado); color: var(--rojo-oscuro); border: 1px solid #dca72c;">
+                <i class="fa-solid fa-id-badge me-1"></i> Rol: {{ $rol }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<h5 class="fw-bold mb-3" style="color: var(--rojo-oscuro);">
+    <i class="fa-solid fa-layer-group me-2"></i> Módulos Disponibles
+</h5>
+
+<div class="row g-4">
+
+    @if($rol === 'ADMIN')
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('users.index') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-users-gear fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Gestión de Usuarios</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Administrar accesos, roles y cuentas del sistema.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card card-module shadow-sm h-100 p-3" style="opacity: 0.6;">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-wrapper me-3 text-secondary" style="background-color: #f8f9fa;">
+                    <i class="fa-solid fa-gears fa-2x"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1 text-secondary">Configuraciones</h5>
+                    <p class="text-muted mb-0" style="font-size: 0.85em;">Ajustes generales del sistema (Próximamente).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @elseif($rol === 'INVENTARIADOR')
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('inventario.index') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-boxes-stacked fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Inventario General</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Registrar, clasificar y gestionar todos los activos.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    @elseif($rol === 'ENCARGADO')
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('activos.mis') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-laptop-file fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Mis Activos</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Consultar el estado de los bienes bajo tu responsabilidad.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    @elseif($rol === 'DECANO')
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('reportes.index') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-chart-line fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Reportes y Consultas</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Generar estadísticas y reportes ejecutivos del inventario.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    @else
+    <div class="col-12">
+        <div class="alert alert-warning d-flex align-items-center shadow-sm" role="alert" style="border-left: 4px solid var(--dorado);">
+            <i class="fa-solid fa-triangle-exclamation fa-2x me-3" style="color: var(--rojo-principal);"></i>
+            <div>
+                <strong>Rol no reconocido.</strong><br>
+                No tienes módulos asignados. Por favor, contacta al administrador del sistema.
+            </div>
+        </div>
+    </div>
+    @endif
+
+</div>
+
+@endsection

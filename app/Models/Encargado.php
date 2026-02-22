@@ -15,4 +15,14 @@ class Encargado extends Model
         'id_usuario',
         'estado',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_usuario', 'id_usuario');
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'id_encargado';
+    }
 }
