@@ -66,6 +66,7 @@
                 <th>Nombre</th>
                 <th>Correo</th>
                 <th>Rol</th>
+                <th>Tipo</th>
                 <th>Estado</th>
                 <th class="text-center pe-4">Acciones</th>
             </tr>
@@ -87,6 +88,11 @@
                 <td>
                     <span class="badge" style="background-color: #e9ecef; color: var(--rojo-oscuro); border: 1px solid #ced4da;">
                         <i class="fa-solid fa-id-badge me-1"></i> {{ $u->rol }}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge" style="background-color: #e9ecef; color: var(--rojo-oscuro); border: 1px solid #ced4da;">
+                        <i class="fa-solid fa-user-tag me-1"></i> {{ $u->tipo }}
                     </span>
                 </td>
                 <td>

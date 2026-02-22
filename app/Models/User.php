@@ -27,6 +27,7 @@ class User extends Authenticatable
         'correo',
         'contrasena',
         'rol',
+        'tipo',
         'estado',
     ];
 

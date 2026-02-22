@@ -113,6 +113,18 @@
                     </div>
                 </div>
 
+                <div class="col-md-6 mb-4">
+                    <label class="form-label text-muted fw-bold">Tipo de Usuario <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-id-badge"></i></span>
+                        <select name="tipo" class="form-select" required>
+                            @foreach(['PERSONA','UNIDAD'] as $t)
+                            <option value="{{ $t }}" @selected(old('tipo', $user->tipo) === $t)>{{ $t }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
             </div>
 
             <hr class="text-muted">
