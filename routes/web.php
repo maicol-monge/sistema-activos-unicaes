@@ -55,6 +55,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/mis-activos', [AsignacionActivoController::class, 'misActivos'])->name('activos.mis');
         Route::get('/mis-asignaciones', [AsignacionActivoController::class, 'misAsignaciones'])
             ->name('asignaciones.mis');
+        Route::get('/mis-reportes-activos', [ReporteActivoController::class, 'misReportes'])
+            ->name('encargado.reportes.index');
+        Route::get('/mis-reportes-activos/crear', [ReporteActivoController::class, 'createEncargado'])
+            ->name('encargado.reportes.create');
+        Route::post('/mis-reportes-activos', [ReporteActivoController::class, 'storeEncargado'])
+            ->name('encargado.reportes.store');
+        Route::get('/mis-reportes-activos/activo/{activo}', [ReporteActivoController::class, 'historialPorActivo'])
+            ->name('encargado.reportes.historial');
 
         Route::post('/asignaciones/{asignacion}/aceptar', [AsignacionActivoController::class, 'aceptar'])
             ->name('asignaciones.aceptar');

@@ -150,6 +150,11 @@
                             <i class="fa-solid fa-inbox me-1"></i> Mis Asignaciones
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('encargado.reportes.index') }}">
+                            <i class="fa-solid fa-clipboard-check me-1"></i> Mis Reportes
+                        </a>
+                    </li>
                     @endif
 
                     @if(auth()->user()->rol === 'DECANO')

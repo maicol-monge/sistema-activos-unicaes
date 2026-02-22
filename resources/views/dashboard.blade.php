@@ -151,6 +151,21 @@
             </div>
         </a>
     </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('encargado.reportes.index') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-clipboard-check fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Reportar Estado</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Informar estado y consultar historial por activo.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
 
     @elseif($rol === 'DECANO')
     <div class="col-md-6 col-lg-4">
