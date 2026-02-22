@@ -26,7 +26,7 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout')
     ->middleware('auth');
 
-// Ruta protegida de prueba (dashboard)
+// Rutas protegidas
 Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -34,11 +34,17 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:ADMIN')->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
-        // aquí luego pones tu CRUD Users
+        Route::resource('categorias-activos', CategoriaActivoController::class)->except(['show']);
+        Route::get('/activos/aprobaciones', [ActivoController::class, 'aprobaciones'])
+            ->name('activos.aprobaciones');
+        Route::post('/activos/{activo}/aprobar', [ActivoController::class, 'aprobar'])
+            ->name('activos.aprobar');
+        Route::post('/activos/{activo}/rechazar', [ActivoController::class, 'rechazar'])
+            ->name('activos.rechazar');
     });
 
     Route::middleware('role:INVENTARIADOR')->group(function () {
-        Route::get('/inventario', fn() => 'Inventario')->name('inventario.index');
+        Route::get('/inventario', [ActivoController::class, 'index'])->name('inventario.index');
         Route::get('/asignaciones', [AsignacionActivoController::class, 'index'])
             ->name('asignaciones.index');
         Route::get('/asignaciones/create', [AsignacionActivoController::class, 'create'])->name('asignaciones.create');
@@ -63,14 +69,13 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware(['auth', 'role:ADMIN,INVENTARIADOR'])->group(function () {
         Route::resource('encargados', EncargadoController::class)->except(['show']);
+        Route::resource('activos', ActivoController::class)->except(['show', 'destroy']);
+    });
+
+    Route::middleware('role:ADMIN')->group(function () {
+        Route::resource('reportes-activos', ReporteActivoController::class);
+        Route::resource('movimientos-activos', MovimientoActivoController::class);
+        Route::resource('bajas-activos', BajaActivoController::class);
+        Route::resource('eliminaciones-activos', EliminacionActivoController::class);
     });
 });
-
-Route::resource('encargados', EncargadoController::class);
-Route::resource('categorias-activos', CategoriaActivoController::class);
-Route::resource('activos', ActivoController::class);
-Route::resource('reportes-activos', ReporteActivoController::class);
-Route::resource('asignaciones-activos', AsignacionActivoController::class);
-Route::resource('movimientos-activos', MovimientoActivoController::class);
-Route::resource('bajas-activos', BajaActivoController::class);
-Route::resource('eliminaciones-activos', EliminacionActivoController::class);

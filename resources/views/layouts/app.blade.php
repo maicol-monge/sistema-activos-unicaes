@@ -99,12 +99,32 @@
                             <i class="fa-solid fa-users me-1"></i> Usuarios
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('categorias-activos.index') }}">
+                            <i class="fa-solid fa-tags me-1"></i> Categorías
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('activos.index') }}">
+                            <i class="fa-solid fa-boxes-stacked me-1"></i> Activos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('activos.aprobaciones') }}">
+                            <i class="fa-solid fa-circle-check me-1"></i> Aprobaciones
+                        </a>
+                    </li>
                     @endif
 
                     @if(auth()->user()->rol === 'INVENTARIADOR')
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('inventario.index') }}">
-                            <i class="fa-solid fa-boxes-stacked me-1"></i> Inventario
+                        <a class="nav-link" href="{{ route('activos.index') }}">
+                            <i class="fa-solid fa-boxes-stacked me-1"></i> Activos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('activos.create') }}">
+                            <i class="fa-solid fa-plus me-1"></i> Registrar Activo
                         </a>
                     </li>
                     <li class="nav-item">

@@ -26,4 +26,24 @@ class Activo extends Model
         'aprobado_por',
         'observaciones',
     ];
+
+    public function categoria()
+    {
+        return $this->belongsTo(CategoriaActivo::class, 'id_categoria_activo', 'id_categoria_activo');
+    }
+
+    public function registrador()
+    {
+        return $this->belongsTo(User::class, 'registrado_por', 'id_usuario');
+    }
+
+    public function aprobador()
+    {
+        return $this->belongsTo(User::class, 'aprobado_por', 'id_usuario');
+    }
+
+    public function movimientos()
+    {
+        return $this->hasMany(MovimientoActivo::class, 'id_activo', 'id_activo');
+    }
 }
