@@ -51,4 +51,9 @@ class Activo extends Model
     {
         return $this->hasMany(AsignacionActivo::class, 'id_activo', 'id_activo');
     }
+
+    public function reportes()
+    {
+        return $this->hasMany(ReporteActivo::class, 'id_activo', 'id_activo');
+    }
 }
