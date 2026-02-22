@@ -37,6 +37,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('categorias-activos', CategoriaActivoController::class)->except(['show']);
         Route::get('/activos/aprobaciones', [ActivoController::class, 'aprobaciones'])
             ->name('activos.aprobaciones');
+        Route::get('/activos/filtros/categorias', [ActivoController::class, 'buscarCategoriasFiltro'])
+            ->name('activos.filtros.categorias');
+        Route::get('/activos/filtros/registradores', [ActivoController::class, 'buscarRegistradoresFiltro'])
+            ->name('activos.filtros.registradores');
         Route::post('/activos/{activo}/aprobar', [ActivoController::class, 'aprobar'])
             ->name('activos.aprobar');
         Route::post('/activos/{activo}/rechazar', [ActivoController::class, 'rechazar'])

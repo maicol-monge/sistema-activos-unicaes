@@ -47,6 +47,43 @@
     </a>
 </div>
 
+<div class="card shadow-sm border-0 mb-4" style="border-top: 4px solid var(--rojo-principal); border-radius: 8px;">
+    <div class="card-body p-3 p-md-4">
+        <form method="GET" action="{{ route('categorias-activos.index') }}" class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label text-muted fw-bold mb-1">Búsqueda</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input
+                        type="text"
+                        name="q"
+                        class="form-control"
+                        value="{{ $filtros['q'] ?? '' }}"
+                        placeholder="Buscar por nombre de categoría...">
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label text-muted fw-bold mb-1">Estado</label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="1" @selected(($filtros['estado'] ?? '' )==='1')>Activa</option>
+                    <option value="0" @selected(($filtros['estado'] ?? '' )==='0')>Inactiva</option>
+                </select>
+            </div>
+
+            <div class="col-12 d-flex justify-content-end gap-2 pt-2">
+                <a href="{{ route('categorias-activos.index') }}" class="btn btn-light border">
+                    <i class="fa-solid fa-broom me-1"></i> Limpiar
+                </a>
+                <button type="submit" class="btn btn-nuevo">
+                    <i class="fa-solid fa-filter me-1"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="table-responsive bg-white rounded-3 shadow-sm border overflow-hidden">
     <table class="table table-custom table-hover mb-0">
         <thead>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Activo;
 use App\Models\CategoriaActivo;
 use App\Models\MovimientoActivo;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,14 +13,45 @@ use Illuminate\Validation\Rule;
 
 class ActivoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $filtros = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'estado' => ['nullable', Rule::in(['PENDIENTE', 'APROBADO', 'RECHAZADO', 'BAJA'])],
+            'tipo' => ['nullable', Rule::in(['FIJO', 'INTANGIBLE'])],
+            'condicion' => ['nullable', Rule::in(['BUENO', 'DANIADO', 'REGULAR'])],
+            'id_categoria_activo' => ['nullable', 'integer', 'exists:categorias_activos,id_categoria_activo'],
+        ]);
+
         $activos = Activo::query()
             ->with(['categoria', 'registrador', 'aprobador'])
+            ->when(!empty($filtros['q']), function ($query) use ($filtros) {
+                $texto = trim($filtros['q']);
+                $query->where(function ($sub) use ($texto) {
+                    $sub->where('codigo', 'like', "%{$texto}%")
+                        ->orWhere('nombre', 'like', "%{$texto}%")
+                        ->orWhere('serial', 'like', "%{$texto}%")
+                        ->orWhere('marca', 'like', "%{$texto}%")
+                        ->orWhere('descripcion', 'like', "%{$texto}%")
+                        ->orWhereHas('categoria', function ($q) use ($texto) {
+                            $q->where('nombre', 'like', "%{$texto}%");
+                        });
+                });
+            })
+            ->when(!empty($filtros['estado']), fn($query) => $query->where('estado', $filtros['estado']))
+            ->when(!empty($filtros['tipo']), fn($query) => $query->where('tipo', $filtros['tipo']))
+            ->when(!empty($filtros['condicion']), fn($query) => $query->where('condicion', $filtros['condicion']))
+            ->when(!empty($filtros['id_categoria_activo']), fn($query) => $query->where('id_categoria_activo', $filtros['id_categoria_activo']))
             ->orderBy('id_activo', 'desc')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('activos.index', compact('activos'));
+        $categorias = CategoriaActivo::query()
+            ->where('estado', 1)
+            ->orderBy('nombre')
+            ->get(['id_categoria_activo', 'nombre']);
+
+        return view('activos.index', compact('activos', 'categorias', 'filtros'));
     }
 
     public function create()
@@ -167,15 +199,138 @@ class ActivoController extends Controller
         abort(404);
     }
 
-    public function aprobaciones()
+    public function aprobaciones(Request $request)
     {
+        $filtros = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'tipo' => ['nullable', Rule::in(['FIJO', 'INTANGIBLE'])],
+            'condicion' => ['nullable', Rule::in(['BUENO', 'DANIADO', 'REGULAR'])],
+            'id_categoria_activo' => ['nullable', 'integer', 'exists:categorias_activos,id_categoria_activo'],
+            'categoria_nombre' => ['nullable', 'string', 'max:100'],
+            'registrado_por' => ['nullable', 'integer', 'exists:users,id_usuario'],
+            'registrado_por_nombre' => ['nullable', 'string', 'max:100'],
+            'fecha_desde' => ['nullable', 'date'],
+            'fecha_hasta' => ['nullable', 'date', 'after_or_equal:fecha_desde'],
+        ]);
+
         $pendientes = Activo::query()
             ->with(['categoria', 'registrador'])
             ->where('estado', 'PENDIENTE')
+            ->when(!empty($filtros['q']), function ($query) use ($filtros) {
+                $texto = trim($filtros['q']);
+                $query->where(function ($sub) use ($texto) {
+                    $sub->where('codigo', 'like', "%{$texto}%")
+                        ->orWhere('nombre', 'like', "%{$texto}%")
+                        ->orWhere('serial', 'like', "%{$texto}%")
+                        ->orWhere('marca', 'like', "%{$texto}%")
+                        ->orWhereHas('categoria', function ($q) use ($texto) {
+                            $q->where('nombre', 'like', "%{$texto}%");
+                        })
+                        ->orWhereHas('registrador', function ($q) use ($texto) {
+                            $q->where('nombre', 'like', "%{$texto}%")
+                                ->orWhere('correo', 'like', "%{$texto}%");
+                        });
+                });
+            })
+            ->when(!empty($filtros['tipo']), fn($query) => $query->where('tipo', $filtros['tipo']))
+            ->when(!empty($filtros['condicion']), fn($query) => $query->where('condicion', $filtros['condicion']))
+            ->when(!empty($filtros['id_categoria_activo']), fn($query) => $query->where('id_categoria_activo', $filtros['id_categoria_activo']))
+            ->when(empty($filtros['id_categoria_activo']) && !empty($filtros['categoria_nombre']), function ($query) use ($filtros) {
+                $texto = trim($filtros['categoria_nombre']);
+                $query->whereHas('categoria', fn($q) => $q->where('nombre', 'like', "%{$texto}%"));
+            })
+            ->when(!empty($filtros['registrado_por']), fn($query) => $query->where('registrado_por', $filtros['registrado_por']))
+            ->when(empty($filtros['registrado_por']) && !empty($filtros['registrado_por_nombre']), function ($query) use ($filtros) {
+                $texto = trim($filtros['registrado_por_nombre']);
+                $query->whereHas('registrador', function ($q) use ($texto) {
+                    $q->where('nombre', 'like', "%{$texto}%")
+                        ->orWhere('correo', 'like', "%{$texto}%");
+                });
+            })
+            ->when(!empty($filtros['fecha_desde']), fn($query) => $query->whereDate('fecha_registro', '>=', $filtros['fecha_desde']))
+            ->when(!empty($filtros['fecha_hasta']), fn($query) => $query->whereDate('fecha_registro', '<=', $filtros['fecha_hasta']))
             ->orderBy('id_activo', 'desc')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('activos.aprobaciones', compact('pendientes'));
+        if (!empty($filtros['id_categoria_activo']) && empty($filtros['categoria_nombre'])) {
+            $categoria = CategoriaActivo::find($filtros['id_categoria_activo']);
+            if ($categoria) {
+                $filtros['categoria_nombre'] = $categoria->nombre;
+            }
+        }
+
+        if (!empty($filtros['registrado_por']) && empty($filtros['registrado_por_nombre'])) {
+            $registrador = User::find($filtros['registrado_por']);
+            if ($registrador) {
+                $filtros['registrado_por_nombre'] = $registrador->nombre . ' (' . $registrador->correo . ')';
+            }
+        }
+
+        $categorias = CategoriaActivo::query()
+            ->where('estado', 1)
+            ->orderBy('nombre')
+            ->limit(30)
+            ->get(['id_categoria_activo', 'nombre']);
+
+        $registradores = User::query()
+            ->whereIn('rol', ['ADMIN', 'INVENTARIADOR'])
+            ->orderBy('nombre')
+            ->limit(30)
+            ->get(['id_usuario', 'nombre', 'correo']);
+
+        return view('activos.aprobaciones', compact('pendientes', 'filtros', 'categorias', 'registradores'));
+    }
+
+    public function buscarCategoriasFiltro(Request $request)
+    {
+        $data = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $q = trim($data['q'] ?? '');
+
+        $categorias = CategoriaActivo::query()
+            ->where('estado', 1)
+            ->when($q !== '', fn($query) => $query->where('nombre', 'like', "%{$q}%"))
+            ->orderBy('nombre')
+            ->limit(15)
+            ->get(['id_categoria_activo', 'nombre'])
+            ->map(fn($categoria) => [
+                'id' => $categoria->id_categoria_activo,
+                'label' => $categoria->nombre,
+            ])
+            ->values();
+
+        return response()->json($categorias);
+    }
+
+    public function buscarRegistradoresFiltro(Request $request)
+    {
+        $data = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $q = trim($data['q'] ?? '');
+
+        $registradores = User::query()
+            ->whereIn('rol', ['ADMIN', 'INVENTARIADOR'])
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('nombre', 'like', "%{$q}%")
+                        ->orWhere('correo', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy('nombre')
+            ->limit(15)
+            ->get(['id_usuario', 'nombre', 'correo'])
+            ->map(fn($usuario) => [
+                'id' => $usuario->id_usuario,
+                'label' => $usuario->nombre . ' (' . $usuario->correo . ')',
+            ])
+            ->values();
+
+        return response()->json($registradores);
     }
 
     public function aprobar(Activo $activo): RedirectResponse
