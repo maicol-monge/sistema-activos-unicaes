@@ -26,15 +26,44 @@ class AsignacionActivoController extends Controller
 
     public function index()
     {
+        $request = request();
+
+        $filtros = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'estado_asignacion' => ['nullable', 'in:PENDIENTE,ACEPTADO,RECHAZADO,CARGADO'],
+            'fecha_desde' => ['nullable', 'date'],
+            'fecha_hasta' => ['nullable', 'date', 'after_or_equal:fecha_desde'],
+        ]);
+
         $asignaciones = AsignacionActivo::with([
             'activo',
             'encargadoUsuario',
             'usuarioAsignador'
         ])
+            ->when(!empty($filtros['q']), function ($query) use ($filtros) {
+                $texto = trim($filtros['q']);
+                $query->where(function ($sub) use ($texto) {
+                    $sub->whereHas('activo', function ($q) use ($texto) {
+                        $q->where('nombre', 'like', "%{$texto}%")
+                            ->orWhere('codigo', 'like', "%{$texto}%");
+                    })
+                        ->orWhereHas('encargadoUsuario', function ($q) use ($texto) {
+                            $q->where('nombre', 'like', "%{$texto}%")
+                                ->orWhere('correo', 'like', "%{$texto}%");
+                        })
+                        ->orWhereHas('usuarioAsignador', function ($q) use ($texto) {
+                            $q->where('nombre', 'like', "%{$texto}%");
+                        });
+                });
+            })
+            ->when(!empty($filtros['estado_asignacion']), fn($query) => $query->where('estado_asignacion', $filtros['estado_asignacion']))
+            ->when(!empty($filtros['fecha_desde']), fn($query) => $query->whereDate('fecha_asignacion', '>=', $filtros['fecha_desde']))
+            ->when(!empty($filtros['fecha_hasta']), fn($query) => $query->whereDate('fecha_asignacion', '<=', $filtros['fecha_hasta']))
             ->orderBy('id_asignacion', 'desc')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('asignaciones.index', compact('asignaciones'));
+        return view('asignaciones.index', compact('asignaciones', 'filtros'));
     }
 
     public function create()
