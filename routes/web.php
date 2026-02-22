@@ -49,14 +49,10 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:INVENTARIADOR')->group(function () {
         Route::get('/inventario', [ActivoController::class, 'index'])->name('inventario.index');
-        Route::get('/asignaciones', [AsignacionActivoController::class, 'index'])
-            ->name('asignaciones.index');
-        Route::get('/asignaciones/create', [AsignacionActivoController::class, 'create'])->name('asignaciones.create');
-        Route::post('/asignaciones', [AsignacionActivoController::class, 'store'])->name('asignaciones.store');
     });
 
     Route::middleware('role:ENCARGADO')->group(function () {
-        Route::get('/mis-activos', fn() => 'Mis activos')->name('activos.mis');
+        Route::get('/mis-activos', [AsignacionActivoController::class, 'misActivos'])->name('activos.mis');
         Route::get('/mis-asignaciones', [AsignacionActivoController::class, 'misAsignaciones'])
             ->name('asignaciones.mis');
 
@@ -65,6 +61,9 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/asignaciones/{asignacion}/rechazar', [AsignacionActivoController::class, 'rechazar'])
             ->name('asignaciones.rechazar');
+
+        Route::post('/asignaciones/{asignacion}/devolver', [AsignacionActivoController::class, 'devolver'])
+            ->name('asignaciones.devolver');
     });
 
     Route::middleware('role:DECANO')->group(function () {
@@ -74,6 +73,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['auth', 'role:ADMIN,INVENTARIADOR'])->group(function () {
         Route::resource('encargados', EncargadoController::class)->except(['show']);
         Route::resource('activos', ActivoController::class)->except(['show', 'destroy']);
+        Route::get('/asignaciones', [AsignacionActivoController::class, 'index'])
+            ->name('asignaciones.index');
+        Route::get('/asignaciones/create', [AsignacionActivoController::class, 'create'])->name('asignaciones.create');
+        Route::post('/asignaciones', [AsignacionActivoController::class, 'store'])->name('asignaciones.store');
     });
 
     Route::middleware('role:ADMIN')->group(function () {

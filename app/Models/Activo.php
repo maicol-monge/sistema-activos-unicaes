@@ -46,4 +46,9 @@ class Activo extends Model
     {
         return $this->hasMany(MovimientoActivo::class, 'id_activo', 'id_activo');
     }
+
+    public function asignaciones()
+    {
+        return $this->hasMany(AsignacionActivo::class, 'id_activo', 'id_activo');
+    }
 }
