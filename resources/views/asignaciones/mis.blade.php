@@ -5,7 +5,6 @@
 @section('content')
 
 <style>
-    /* Estilos de la tabla institucional */
     .table-custom th {
         background-color: var(--rojo-principal);
         color: var(--dorado);
@@ -23,13 +22,11 @@
         background-color: #fdfaf3;
     }
 
-    /* Badges de estado */
     .badge-estado {
         font-size: 0.85em;
         padding: 0.5em 0.8em;
     }
 
-    /* Botones de acción del encargado */
     .btn-aceptar {
         background-color: #198754;
         color: white;
@@ -57,10 +54,22 @@
         box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
     }
 
-    /* Resaltar visualmente las filas pendientes */
+    .btn-devolver {
+        background-color: transparent;
+        color: #0d6efd;
+        border: 1px solid #0d6efd;
+        transition: all 0.3s ease;
+    }
+
+    .btn-devolver:hover {
+        background-color: #0d6efd;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+    }
+
     .fila-pendiente {
         background-color: rgba(237, 189, 63, 0.05);
-        /* Un fondo doradito muy suave */
         border-left: 4px solid var(--dorado);
     }
 </style>
@@ -105,6 +114,10 @@
                     @elseif($a->estado_asignacion === 'RECHAZADO')
                     <span class="badge badge-estado bg-danger bg-opacity-10 text-danger border border-danger">
                         <i class="fa-solid fa-xmark me-1"></i> RECHAZADO
+                    </span>
+                    @elseif($a->estado_asignacion === 'CARGADO')
+                    <span class="badge badge-estado bg-info bg-opacity-10 text-info border border-info">
+                        <i class="fa-solid fa-rotate-left me-1"></i> DEVUELTO
                     </span>
                     @else
                     <span class="badge badge-estado bg-secondary bg-opacity-10 text-secondary border border-secondary">
@@ -154,6 +167,13 @@
                             </button>
                         </form>
                     </div>
+                    @elseif($a->estado_asignacion === 'ACEPTADO' && (int)$a->estado === 1)
+                    <form method="POST" action="{{ route('asignaciones.devolver', $a) }}" class="m-0">
+                        @csrf
+                        <button type="button" class="btn btn-sm btn-devolver fw-bold swal-devolver" data-message="¿Confirmas la devolución de este activo? Esta acción cerrará la asignación activa.">
+                            <i class="fa-solid fa-rotate-left me-1"></i> Devolver
+                        </button>
+                    </form>
                     @else
                     <span class="text-muted" style="font-size: 0.85em;">
                         <i class="fa-solid fa-lock me-1"></i> Acción registrada
@@ -211,6 +231,10 @@
         });
         attachSwal('.swal-rechazar', {
             title: 'Rechazar asignación'
+        });
+
+        attachSwal('.swal-devolver', {
+            title: 'Devolver activo'
         });
     });
 </script>

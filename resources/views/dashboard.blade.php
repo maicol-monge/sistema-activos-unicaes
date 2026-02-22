@@ -73,22 +73,39 @@
         </a>
     </div>
     <div class="col-md-6 col-lg-4">
-        <div class="card card-module shadow-sm h-100 p-3" style="opacity: 0.6;">
-            <div class="card-body d-flex align-items-center">
-                <div class="icon-wrapper me-3 text-secondary" style="background-color: #f8f9fa;">
-                    <i class="fa-solid fa-gears fa-2x"></i>
-                </div>
-                <div>
-                    <h5 class="fw-bold mb-1 text-secondary">Configuraciones</h5>
-                    <p class="text-muted mb-0" style="font-size: 0.85em;">Ajustes generales del sistema (Próximamente).</p>
+        <a href="{{ route('categorias-activos.index') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-tags fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Categorías</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Administrar categorías de activos institucionales.</p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('activos.aprobaciones') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-circle-check fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Aprobaciones</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Revisar y aprobar activos pendientes.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
     </div>
 
     @elseif($rol === 'INVENTARIADOR')
     <div class="col-md-6 col-lg-4">
-        <a href="{{ route('inventario.index') }}" class="text-decoration-none text-dark">
+        <a href="{{ route('activos.index') }}" class="text-decoration-none text-dark">
             <div class="card card-module shadow-sm h-100 p-3">
                 <div class="card-body d-flex align-items-center">
                     <div class="icon-wrapper me-3">
@@ -97,6 +114,21 @@
                     <div>
                         <h5 class="fw-bold mb-1">Inventario General</h5>
                         <p class="text-muted mb-0" style="font-size: 0.85em;">Registrar, clasificar y gestionar todos los activos.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('asignaciones.index') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-clipboard-list fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Asignaciones</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Gestionar asignaciones de activos a encargados.</p>
                     </div>
                 </div>
             </div>
@@ -114,6 +146,21 @@
                     <div>
                         <h5 class="fw-bold mb-1">Mis Activos</h5>
                         <p class="text-muted mb-0" style="font-size: 0.85em;">Consultar el estado de los bienes bajo tu responsabilidad.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('encargado.reportes.index') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-clipboard-check fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Reportar Estado</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Informar estado y consultar historial por activo.</p>
                     </div>
                 </div>
             </div>

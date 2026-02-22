@@ -11,10 +11,20 @@ class ReporteActivo extends Model
 
     protected $fillable = [
         'id_activo',
-        'id_encargado',
+        'id_usuario',
         'estado_reporte',
         'comentario',
         'fecha',
         'estado',
     ];
+
+    public function activo()
+    {
+        return $this->belongsTo(Activo::class, 'id_activo', 'id_activo');
+    }
+
+    public function usuario()
+    {
+        return $this->belongsTo(User::class, 'id_usuario', 'id_usuario');
+    }
 }

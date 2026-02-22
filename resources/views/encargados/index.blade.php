@@ -76,11 +76,7 @@
                     </span>
                 </td>
                 <td>
-                    @if($e->user)
-                    <span class="text-muted"><i class="fa-regular fa-envelope me-1"></i> {{ $e->user->correo }}</span>
-                    @else
-                    <span class="text-muted fst-italic">— Sin cuenta —</span>
-                    @endif
+                    <span class="text-muted"><i class="fa-regular fa-envelope me-1"></i> {{ $e->correo }}</span>
                 </td>
                 <td>
                     @if($e->estado)
