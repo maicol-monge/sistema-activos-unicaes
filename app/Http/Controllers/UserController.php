@@ -26,6 +26,7 @@ class UserController extends Controller
             'correo' => ['required', 'email', 'max:150', 'unique:users,correo'],
             'contrasena' => ['required', 'string', 'min:8'],
             'rol' => ['required', 'in:ADMIN,INVENTARIADOR,ENCARGADO,DECANO'],
+            'tipo' => ['required', 'in:PERSONA,UNIDAD'],
             'estado' => ['required', 'in:0,1'],
         ], [
             'correo.unique' => 'El correo electrónico ya está registrado.',
@@ -39,6 +40,7 @@ class UserController extends Controller
             'correo' => $request->correo,
             'contrasena' => Hash::make($request->contrasena),
             'rol' => $request->rol,
+            'tipo' => $request->tipo,
             'estado' => (int) $request->estado,
         ]);
 
@@ -56,6 +58,7 @@ class UserController extends Controller
             'nombre' => ['required', 'string', 'max:100'],
             'correo' => ['required', 'email', 'max:150', 'unique:users,correo,' . $user->id_usuario . ',id_usuario'],
             'rol' => ['required', 'in:ADMIN,INVENTARIADOR,ENCARGADO,DECANO'],
+            'tipo' => ['required', 'in:PERSONA,UNIDAD'],
             'estado' => ['required', 'in:0,1'],
             'contrasena' => ['nullable', 'string', 'min:8'],
         ], [
@@ -66,6 +69,7 @@ class UserController extends Controller
         $user->nombre = $request->nombre;
         $user->correo = $request->correo;
         $user->rol = $request->rol;
+        $user->tipo = $request->tipo;
         $user->estado = (int) $request->estado;
 
         if ($request->filled('contrasena')) {
