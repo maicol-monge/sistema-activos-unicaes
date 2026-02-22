@@ -70,7 +70,7 @@ class ActivoController extends Controller
             'tipo' => ['required', Rule::in(['FIJO', 'INTANGIBLE'])],
             'marca' => ['nullable', 'string', 'max:255'],
             'id_categoria_activo' => ['required', 'exists:categorias_activos,id_categoria_activo'],
-            'fecha_adquisicion' => ['required', 'date'],
+            'fecha_adquisicion' => ['required', 'date', 'after_or_equal:1982-04-13', 'before_or_equal:today'],
             'valor_compra' => ['required', 'numeric', 'min:0.01'],
             'condicion' => ['required', Rule::in(['BUENO', 'DANIADO', 'REGULAR'])],
         ], [
@@ -78,6 +78,8 @@ class ActivoController extends Controller
             'tipo.required' => 'El tipo del activo es obligatorio.',
             'id_categoria_activo.required' => 'La categoría es obligatoria.',
             'fecha_adquisicion.required' => 'La fecha de adquisición es obligatoria.',
+            'fecha_adquisicion.after_or_equal' => 'La fecha de adquisición no puede ser menor al 13/04/1982.',
+            'fecha_adquisicion.before_or_equal' => 'La fecha de adquisición no puede ser futura.',
             'valor_compra.required' => 'El valor de compra es obligatorio.',
             'condicion.required' => 'La condición del activo es obligatoria.',
         ]);
@@ -160,9 +162,12 @@ class ActivoController extends Controller
             'tipo' => ['required', Rule::in(['FIJO', 'INTANGIBLE'])],
             'marca' => ['nullable', 'string', 'max:255'],
             'id_categoria_activo' => ['required', 'exists:categorias_activos,id_categoria_activo'],
-            'fecha_adquisicion' => ['required', 'date'],
+            'fecha_adquisicion' => ['required', 'date', 'after_or_equal:1982-04-13', 'before_or_equal:today'],
             'valor_compra' => ['required', 'numeric', 'min:0.01'],
             'condicion' => ['required', Rule::in(['BUENO', 'DANIADO', 'REGULAR'])],
+        ], [
+            'fecha_adquisicion.after_or_equal' => 'La fecha de adquisición no puede ser menor al 13/04/1982.',
+            'fecha_adquisicion.before_or_equal' => 'La fecha de adquisición no puede ser futura.',
         ]);
 
         if (blank($data['serial'] ?? null) && blank($data['descripcion'] ?? null)) {

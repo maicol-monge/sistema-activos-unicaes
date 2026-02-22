@@ -112,7 +112,7 @@
                     <label class="form-label text-muted fw-bold">Fecha de adquisición <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-calendar-days"></i></span>
-                        <input type="date" name="fecha_adquisicion" class="form-control" value="{{ old('fecha_adquisicion', $activo->fecha_adquisicion) }}" required>
+                        <input type="date" name="fecha_adquisicion" class="form-control" value="{{ old('fecha_adquisicion', $activo->fecha_adquisicion) }}" min="1982-04-13" max="{{ now()->toDateString() }}" required>
                     </div>
                 </div>
 
