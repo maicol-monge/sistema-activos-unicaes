@@ -97,22 +97,25 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label text-muted fw-bold">Usuario Vinculado en el Sistema <span class="text-muted fw-normal">(Opcional)</span></label>
+                    <label class="form-label text-muted fw-bold">Correo Electrónico <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fa-solid fa-link"></i></span>
-                        <select name="id_usuario" class="form-select @error('id_usuario') is-invalid @enderror">
-                            <option value="">-- Ninguno --</option>
-                            @foreach($usuarios as $u)
-                            <option value="{{ $u->id_usuario }}" @selected(old('id_usuario')==$u->id_usuario)>
-                                {{ $u->nombre }} ({{ $u->rol }})
-                            </option>
-                            @endforeach
-                        </select>
+                        <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+                        <input type="email" name="correo" class="form-control @error('correo') is-invalid @enderror" value="{{ old('correo') }}" placeholder="encargado@unicaes.edu.sv">
                     </div>
-                    <div class="form-text mt-1" style="font-size: 0.85em;">
-                        <i class="fa-solid fa-circle-info me-1 text-info"></i> Selecciona un usuario si este encargado necesita acceso al sistema.
+                    @error('correo')
+                    <div class="text-danger mt-1 fw-semibold" style="font-size: 0.85em;">
+                        <i class="fa-solid fa-circle-exclamation me-1"></i> {{ $message }}
                     </div>
-                    @error('id_usuario')
+                    @enderror
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label text-muted fw-bold">Contraseña <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" name="contrasena" class="form-control @error('contrasena') is-invalid @enderror" placeholder="Mínimo 6 caracteres">
+                    </div>
+                    @error('contrasena')
                     <div class="text-danger mt-1 fw-semibold" style="font-size: 0.85em;">
                         <i class="fa-solid fa-circle-exclamation me-1"></i> {{ $message }}
                     </div>

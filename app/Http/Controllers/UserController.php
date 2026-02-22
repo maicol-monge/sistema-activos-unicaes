@@ -8,10 +8,31 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::orderBy('id_usuario', 'desc')->paginate(10);
-        return view('users.index', compact('users'));
+        $filtros = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'rol' => ['nullable', 'in:ADMIN,INVENTARIADOR,ENCARGADO,DECANO'],
+            'tipo' => ['nullable', 'in:PERSONA,UNIDAD'],
+            'estado' => ['nullable', 'in:0,1'],
+        ]);
+
+        $users = User::query()
+            ->when(!empty($filtros['q']), function ($query) use ($filtros) {
+                $texto = trim($filtros['q']);
+                $query->where(function ($sub) use ($texto) {
+                    $sub->where('nombre', 'like', "%{$texto}%")
+                        ->orWhere('correo', 'like', "%{$texto}%");
+                });
+            })
+            ->when(!empty($filtros['rol']), fn($query) => $query->where('rol', $filtros['rol']))
+            ->when(!empty($filtros['tipo']), fn($query) => $query->where('tipo', $filtros['tipo']))
+            ->when(isset($filtros['estado']) && $filtros['estado'] !== '', fn($query) => $query->where('estado', (int) $filtros['estado']))
+            ->orderBy('id_usuario', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('users.index', compact('users', 'filtros'));
     }
 
     public function create()

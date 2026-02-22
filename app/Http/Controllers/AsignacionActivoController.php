@@ -12,23 +12,68 @@ use Illuminate\Http\Request;
 class AsignacionActivoController extends Controller
 {
 
+    public function misActivos()
+    {
+        $asignaciones = AsignacionActivo::with(['activo', 'usuarioAsignador'])
+            ->where('id_usuario', auth()->user()->id_usuario)
+            ->where('estado', 1)
+            ->where('estado_asignacion', 'ACEPTADO')
+            ->orderBy('id_asignacion', 'desc')
+            ->paginate(10);
+
+        return view('activos.mis', compact('asignaciones'));
+    }
+
     public function index()
     {
+        $request = request();
+
+        $filtros = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'estado_asignacion' => ['nullable', 'in:PENDIENTE,ACEPTADO,RECHAZADO,CARGADO'],
+            'fecha_desde' => ['nullable', 'date'],
+            'fecha_hasta' => ['nullable', 'date', 'after_or_equal:fecha_desde'],
+        ]);
+
         $asignaciones = AsignacionActivo::with([
             'activo',
             'encargadoUsuario',
             'usuarioAsignador'
         ])
+            ->when(!empty($filtros['q']), function ($query) use ($filtros) {
+                $texto = trim($filtros['q']);
+                $query->where(function ($sub) use ($texto) {
+                    $sub->whereHas('activo', function ($q) use ($texto) {
+                        $q->where('nombre', 'like', "%{$texto}%")
+                            ->orWhere('codigo', 'like', "%{$texto}%");
+                    })
+                        ->orWhereHas('encargadoUsuario', function ($q) use ($texto) {
+                            $q->where('nombre', 'like', "%{$texto}%")
+                                ->orWhere('correo', 'like', "%{$texto}%");
+                        })
+                        ->orWhereHas('usuarioAsignador', function ($q) use ($texto) {
+                            $q->where('nombre', 'like', "%{$texto}%");
+                        });
+                });
+            })
+            ->when(!empty($filtros['estado_asignacion']), fn($query) => $query->where('estado_asignacion', $filtros['estado_asignacion']))
+            ->when(!empty($filtros['fecha_desde']), fn($query) => $query->whereDate('fecha_asignacion', '>=', $filtros['fecha_desde']))
+            ->when(!empty($filtros['fecha_hasta']), fn($query) => $query->whereDate('fecha_asignacion', '<=', $filtros['fecha_hasta']))
             ->orderBy('id_asignacion', 'desc')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('asignaciones.index', compact('asignaciones'));
+        return view('asignaciones.index', compact('asignaciones', 'filtros'));
     }
 
     public function create()
     {
         // Solo activos aprobados
         $activos = Activo::where('estado', 'APROBADO')
+            ->whereDoesntHave('asignaciones', function ($query) {
+                $query->where('estado', 1)
+                    ->where('estado_asignacion', 'ACEPTADO');
+            })
             ->orderBy('nombre')
             ->get();
 
@@ -116,7 +161,7 @@ class AsignacionActivoController extends Controller
         });
 
         return redirect()
-            ->route('dashboard')
+            ->route('asignaciones.index')
             ->with('ok', 'Asignación creada correctamente (PENDIENTE).');
     }
 
@@ -172,7 +217,7 @@ class AsignacionActivoController extends Controller
         }
 
         // ✅ Solo permitir rechazar pendientes
-        if ($asignacion->estado_asignacion !== 'ASIGNACION') {
+        if ($asignacion->estado_asignacion !== 'PENDIENTE') {
             return back()->with('err', 'Solo puedes responder asignaciones PENDIENTES.');
         }
 
@@ -180,6 +225,7 @@ class AsignacionActivoController extends Controller
 
             // ❌ Marcar como rechazado
             $asignacion->estado_asignacion = 'RECHAZADO';
+            $asignacion->estado = 0;
             $asignacion->fecha_respuesta = now();
             $asignacion->save();
 
@@ -195,5 +241,34 @@ class AsignacionActivoController extends Controller
         });
 
         return back()->with('ok', 'Asignación rechazada. El activo queda disponible para nueva asignación.');
+    }
+
+    public function devolver(AsignacionActivo $asignacion)
+    {
+        if ($asignacion->id_usuario != auth()->user()->id_usuario) {
+            abort(403, 'No autorizado');
+        }
+
+        if ($asignacion->estado_asignacion !== 'ACEPTADO' || (int) $asignacion->estado !== 1) {
+            return back()->with('err', 'Solo pueden devolverse asignaciones aceptadas activas.');
+        }
+
+        DB::transaction(function () use ($asignacion) {
+            $asignacion->estado_asignacion = 'CARGADO';
+            $asignacion->estado = 0;
+            $asignacion->fecha_respuesta = now();
+            $asignacion->save();
+
+            MovimientoActivo::create([
+                'id_activo' => $asignacion->id_activo,
+                'realizado_por' => auth()->user()->id_usuario,
+                'tipo' => 'DEVOLUCION',
+                'observaciones' => 'Devolución de activo por encargado. ID asignación: ' . $asignacion->id_asignacion,
+                'fecha' => now(),
+                'estado' => 1,
+            ]);
+        });
+
+        return back()->with('ok', 'Activo devuelto correctamente. La asignación fue cerrada.');
     }
 }

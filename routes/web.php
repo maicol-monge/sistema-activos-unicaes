@@ -26,7 +26,7 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout')
     ->middleware('auth');
 
-// Ruta protegida de prueba (dashboard)
+// Rutas protegidas
 Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -34,19 +34,25 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:ADMIN')->group(function () {
         Route::resource('users', UserController::class)->except(['show']);
-        // aquí luego pones tu CRUD Users
+        Route::resource('categorias-activos', CategoriaActivoController::class)->except(['show']);
+        Route::get('/activos/aprobaciones', [ActivoController::class, 'aprobaciones'])
+            ->name('activos.aprobaciones');
+        Route::get('/activos/filtros/categorias', [ActivoController::class, 'buscarCategoriasFiltro'])
+            ->name('activos.filtros.categorias');
+        Route::get('/activos/filtros/registradores', [ActivoController::class, 'buscarRegistradoresFiltro'])
+            ->name('activos.filtros.registradores');
+        Route::post('/activos/{activo}/aprobar', [ActivoController::class, 'aprobar'])
+            ->name('activos.aprobar');
+        Route::post('/activos/{activo}/rechazar', [ActivoController::class, 'rechazar'])
+            ->name('activos.rechazar');
     });
 
     Route::middleware('role:INVENTARIADOR')->group(function () {
-        Route::get('/inventario', fn() => 'Inventario')->name('inventario.index');
-        Route::get('/asignaciones', [AsignacionActivoController::class, 'index'])
-            ->name('asignaciones.index');
-        Route::get('/asignaciones/create', [AsignacionActivoController::class, 'create'])->name('asignaciones.create');
-        Route::post('/asignaciones', [AsignacionActivoController::class, 'store'])->name('asignaciones.store');
+        Route::get('/inventario', [ActivoController::class, 'index'])->name('inventario.index');
     });
 
     Route::middleware('role:ENCARGADO')->group(function () {
-        Route::get('/mis-activos', fn() => 'Mis activos')->name('activos.mis');
+        Route::get('/mis-activos', [AsignacionActivoController::class, 'misActivos'])->name('activos.mis');
         Route::get('/mis-asignaciones', [AsignacionActivoController::class, 'misAsignaciones'])
             ->name('asignaciones.mis');
 
@@ -55,6 +61,9 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/asignaciones/{asignacion}/rechazar', [AsignacionActivoController::class, 'rechazar'])
             ->name('asignaciones.rechazar');
+
+        Route::post('/asignaciones/{asignacion}/devolver', [AsignacionActivoController::class, 'devolver'])
+            ->name('asignaciones.devolver');
     });
 
     Route::middleware('role:DECANO')->group(function () {
@@ -63,14 +72,17 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware(['auth', 'role:ADMIN,INVENTARIADOR'])->group(function () {
         Route::resource('encargados', EncargadoController::class)->except(['show']);
+        Route::resource('activos', ActivoController::class)->except(['show', 'destroy']);
+        Route::get('/asignaciones', [AsignacionActivoController::class, 'index'])
+            ->name('asignaciones.index');
+        Route::get('/asignaciones/create', [AsignacionActivoController::class, 'create'])->name('asignaciones.create');
+        Route::post('/asignaciones', [AsignacionActivoController::class, 'store'])->name('asignaciones.store');
+    });
+
+    Route::middleware('role:ADMIN')->group(function () {
+        Route::resource('reportes-activos', ReporteActivoController::class);
+        Route::resource('movimientos-activos', MovimientoActivoController::class);
+        Route::resource('bajas-activos', BajaActivoController::class);
+        Route::resource('eliminaciones-activos', EliminacionActivoController::class);
     });
 });
-
-Route::resource('encargados', EncargadoController::class);
-Route::resource('categorias-activos', CategoriaActivoController::class);
-Route::resource('activos', ActivoController::class);
-Route::resource('reportes-activos', ReporteActivoController::class);
-Route::resource('asignaciones-activos', AsignacionActivoController::class);
-Route::resource('movimientos-activos', MovimientoActivoController::class);
-Route::resource('bajas-activos', BajaActivoController::class);
-Route::resource('eliminaciones-activos', EliminacionActivoController::class);
