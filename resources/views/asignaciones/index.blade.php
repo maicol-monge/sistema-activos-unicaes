@@ -55,18 +55,10 @@
     </a>
 </div>
 
-@if(session('ok'))
-<div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #198754;">
-    <i class="fa-solid fa-circle-check me-2"></i> {{ session('ok') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
-
 <div class="table-responsive bg-white rounded-3 shadow-sm border overflow-hidden">
     <table class="table table-custom table-hover mb-0">
         <thead>
             <tr>
-                <th class="ps-4">ID</th>
                 <th>Activo</th>
                 <th>Encargado</th>
                 <th class="text-center">Estado</th>
@@ -77,7 +69,6 @@
         <tbody>
             @forelse($asignaciones as $a)
             <tr>
-                <td class="ps-4 fw-bold text-muted">#{{ $a->id_asignacion }}</td>
 
                 <td>
                     <span class="fw-semibold text-dark">
@@ -89,7 +80,13 @@
                 <td>
                     <span class="text-dark">
                         <i class="fa-solid fa-user-tie me-1" style="color: var(--dorado);"></i>
-                        {{ $a->encargado?->nombre ?? 'Encargado no encontrado' }}
+
+                        {{-- ✅ Encargado ahora es Usuario (rol ENCARGADO) --}}
+                        {{ $a->encargadoUsuario?->nombre ?? 'Encargado no encontrado' }}
+
+                        @if($a->encargadoUsuario?->tipo)
+                        <span class="text-muted" style="font-size: 0.85em;">({{ $a->encargadoUsuario->tipo }})</span>
+                        @endif
                     </span>
                 </td>
 

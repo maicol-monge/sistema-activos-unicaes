@@ -71,25 +71,10 @@
     </h2>
 </div>
 
-@if(session('ok'))
-<div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #198754;">
-    <i class="fa-solid fa-circle-check me-2"></i> {{ session('ok') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
-
-@if(session('err'))
-<div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #dc3545;">
-    <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ session('err') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
-
 <div class="table-responsive bg-white rounded-3 shadow-sm border overflow-hidden">
     <table class="table table-custom mb-0">
         <thead>
             <tr>
-                <th class="ps-4">Folio</th>
                 <th>Activo Asignado</th>
                 <th class="text-center">Estado Actual</th>
                 <th>Fecha de Asignación</th>
@@ -100,8 +85,6 @@
         <tbody>
             @forelse($asignaciones as $a)
             <tr class="{{ $a->estado_asignacion === 'PENDIENTE' ? 'fila-pendiente' : '' }}">
-
-                <td class="ps-4 fw-bold text-muted">#{{ $a->id_asignacion }}</td>
 
                 <td>
                     <span class="fw-semibold text-dark">
@@ -159,14 +142,14 @@
                     <div class="d-flex justify-content-center gap-2">
                         <form method="POST" action="{{ route('asignaciones.aceptar', $a) }}" class="m-0">
                             @csrf
-                            <button type="submit" class="btn btn-sm btn-aceptar fw-bold shadow-sm" onclick="return confirm('¿Confirmas que has recibido y aceptas la responsabilidad de este activo?')">
+                            <button type="button" class="btn btn-sm btn-aceptar fw-bold shadow-sm swal-aceptar" data-message="¿Confirmas que has recibido y aceptas la responsabilidad de este activo?">
                                 <i class="fa-solid fa-check me-1"></i> Aceptar
                             </button>
                         </form>
 
                         <form method="POST" action="{{ route('asignaciones.rechazar', $a) }}" class="m-0">
                             @csrf
-                            <button type="submit" class="btn btn-sm btn-rechazar fw-bold" onclick="return confirm('¿Estás seguro de rechazar esta asignación? Deberás justificarlo con el administrador.')">
+                            <button type="button" class="btn btn-sm btn-rechazar fw-bold swal-rechazar" data-message="¿Estás seguro de rechazar esta asignación? Deberás justificarlo con el administrador.">
                                 <i class="fa-solid fa-xmark me-1"></i> Rechazar
                             </button>
                         </form>
@@ -195,3 +178,40 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        function attachSwal(selector, options) {
+            document.querySelectorAll(selector).forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const message = btn.getAttribute('data-message') || options.text;
+                    Swal.fire({
+                        title: options.title || '¿Confirmar?',
+                        text: message,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí',
+                        cancelButtonText: 'No',
+                        confirmButtonColor: '#198754',
+                        cancelButtonColor: '#6c757d'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            const form = btn.closest('form');
+                            if (form) form.submit();
+                        }
+                    });
+                });
+            });
+        }
+
+        attachSwal('.swal-aceptar', {
+            title: 'Aceptar asignación'
+        });
+        attachSwal('.swal-rechazar', {
+            title: 'Rechazar asignación'
+        });
+    });
+</script>
+@endpush
