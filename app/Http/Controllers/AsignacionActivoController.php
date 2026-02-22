@@ -14,14 +14,43 @@ class AsignacionActivoController extends Controller
 
     public function misActivos()
     {
-        $asignaciones = AsignacionActivo::with(['activo', 'usuarioAsignador'])
+        $request = request();
+
+        $filtros = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'id_categoria_activo' => ['nullable', 'exists:categorias_activos,id_categoria_activo'],
+            'tipo' => ['nullable', 'in:FIJO,INTANGIBLE'],
+        ]);
+
+        $asignaciones = AsignacionActivo::with(['activo.categoria', 'usuarioAsignador'])
             ->where('id_usuario', auth()->user()->id_usuario)
             ->where('estado', 1)
             ->where('estado_asignacion', 'ACEPTADO')
+            ->when(!empty($filtros['q']), function ($query) use ($filtros) {
+                $texto = trim($filtros['q']);
+                $query->whereHas('activo', function ($q) use ($texto) {
+                    $q->where('nombre', 'like', "%{$texto}%")
+                        ->orWhere('codigo', 'like', "%{$texto}%")
+                        ->orWhere('serial', 'like', "%{$texto}%");
+                });
+            })
+            ->when(!empty($filtros['id_categoria_activo']), function ($query) use ($filtros) {
+                $query->whereHas('activo', function ($q) use ($filtros) {
+                    $q->where('id_categoria_activo', $filtros['id_categoria_activo']);
+                });
+            })
+            ->when(!empty($filtros['tipo']), function ($query) use ($filtros) {
+                $query->whereHas('activo', function ($q) use ($filtros) {
+                    $q->where('tipo', $filtros['tipo']);
+                });
+            })
             ->orderBy('id_asignacion', 'desc')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('activos.mis', compact('asignaciones'));
+        $categorias = \App\Models\CategoriaActivo::where('estado', 1)->orderBy('nombre')->get();
+
+        return view('activos.mis', compact('asignaciones', 'filtros', 'categorias'));
     }
 
     public function index()
@@ -168,12 +197,28 @@ class AsignacionActivoController extends Controller
     //^^^^^^
     public function misAsignaciones()
     {
+        $request = request();
+
+        $filtros = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'estado_asignacion' => ['nullable', 'in:PENDIENTE,ACEPTADO,RECHAZADO,DEVOLUCION,BAJA'],
+        ]);
+
         $asignaciones = AsignacionActivo::with('activo')
             ->where('id_usuario', auth()->user()->id_usuario)
+            ->when(!empty($filtros['q']), function ($query) use ($filtros) {
+                $texto = trim($filtros['q']);
+                $query->whereHas('activo', function ($q) use ($texto) {
+                    $q->where('nombre', 'like', "%{$texto}%")
+                        ->orWhere('codigo', 'like', "%{$texto}%");
+                });
+            })
+            ->when(!empty($filtros['estado_asignacion']), fn($query) => $query->where('estado_asignacion', $filtros['estado_asignacion']))
             ->orderBy('id_asignacion', 'desc')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('asignaciones.mis', compact('asignaciones'));
+        return view('asignaciones.mis', compact('asignaciones', 'filtros'));
     }
 
     public function aceptar(AsignacionActivo $asignacion)
