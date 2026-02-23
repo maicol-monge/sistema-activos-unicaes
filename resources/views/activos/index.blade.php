@@ -38,13 +38,22 @@
     }
 </style>
 
+@php $rol = auth()->user()->rol ?? null; @endphp
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0" style="color: var(--rojo-principal); font-weight: 700;">
         <i class="fa-solid fa-boxes-stacked me-2"></i> Activos
     </h2>
-    <a href="{{ route('activos.create') }}" class="btn btn-nuevo shadow-sm">
-        <i class="fa-solid fa-plus me-1"></i> Nuevo Activo
-    </a>
+    <div class="d-flex gap-2">
+        @if(in_array($rol, ['ADMIN','INVENTARIADOR']))
+        <a href="{{ route('asignaciones.create') }}" class="btn btn-light border shadow-sm">
+            <i class="fa-solid fa-share-nodes me-1"></i> Nueva Asignación
+        </a>
+        <a href="{{ route('activos.create') }}" class="btn btn-nuevo shadow-sm">
+            <i class="fa-solid fa-plus me-1"></i> Nuevo Activo
+        </a>
+        @endif
+    </div>
 </div>
 
 <div class="card shadow-sm border-0 mb-4" style="border-top: 4px solid var(--rojo-principal); border-radius: 8px;">
@@ -158,17 +167,55 @@
                 </td>
                 <td class="text-center pe-4">
                     @php
-                        $canEdit = auth()->user()->rol === 'ADMIN'
-                            || (auth()->user()->rol === 'INVENTARIADOR' && $activo->registrado_por === auth()->user()->id_usuario);
+                        $usuario = auth()->user();
+                        $puedeEditar = false;
+                        $puedeDarBaja = false;
+
+                        if ($usuario->rol === 'ADMIN') {
+                            $puedeEditar = true; // ADMIN puede editar cualquier activo
+                            $puedeDarBaja = $activo->estado === 'APROBADO';
+                        }
+
+                        if ($usuario->rol === 'INVENTARIADOR'
+                            && $activo->registrado_por == $usuario->id_usuario
+                            && $activo->estado === 'PENDIENTE') {
+                            $puedeEditar = true;
+                        }
                     @endphp
 
-                    @if($canEdit && $activo->estado !== 'APROBADO')
-                    <a href="{{ route('activos.edit', $activo) }}" class="btn btn-sm btn-light border" title="Editar">
-                        <i class="fa-solid fa-pen" style="color: var(--dorado);"></i>
-                    </a>
-                    @else
-                    <span class="text-muted">—</span>
-                    @endif
+                    <div class="d-inline-flex gap-1 justify-content-center">
+                        @if($usuario->rol === 'ADMIN')
+                        <a href="{{ route('activos.historial', $activo) }}" class="btn btn-sm btn-outline-secondary" title="Ver historial">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </a>
+                        @endif
+
+                        @if($puedeEditar)
+                        <a href="{{ route('activos.edit', $activo) }}" class="btn btn-sm btn-light border" title="Editar">
+                            <i class="fa-solid fa-pen" style="color: var(--dorado);"></i>
+                        </a>
+                        @endif
+
+                        @if($puedeDarBaja)
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-danger btn-baja-directa"
+                            data-id="{{ $activo->id_activo }}"
+                            title="Dar de baja"
+                        >
+                            <i class="fa-solid fa-arrow-down-long"></i>
+                        </button>
+
+                        <form id="form-baja-{{ $activo->id_activo }}" method="POST" action="{{ route('activos.baja-directa', $activo) }}" class="d-none">
+                            @csrf
+                            <input type="hidden" name="motivo_baja" value="">
+                        </form>
+                        @endif
+
+                        @if(!$puedeEditar && !$puedeDarBaja)
+                            <span class="text-muted">-</span>
+                        @endif
+                    </div>
                 </td>
             </tr>
             @empty
@@ -188,3 +235,42 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('click', async function(e) {
+            const btn = e.target.closest('.btn-baja-directa');
+            if (!btn) return;
+
+            const id = btn.dataset.id;
+            const form = document.getElementById(`form-baja-${id}`);
+            if (!form) return;
+
+            const { value: motivo } = await Swal.fire({
+                title: 'Dar de baja activo',
+                text: 'Esta acción marcará el activo como BAJA.',
+                input: 'textarea',
+                inputLabel: 'Motivo de la baja (obligatorio)',
+                inputPlaceholder: 'Describe por qué se da de baja el activo...',
+                inputAttributes: {
+                    'aria-label': 'Motivo de la baja'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Sí, dar de baja',
+                cancelButtonText: 'Cancelar',
+                inputValidator: (value) => {
+                    if (!value || !value.trim()) {
+                        return 'El motivo de la baja es obligatorio.';
+                    }
+                }
+            });
+
+            if (motivo) {
+                form.querySelector('input[name="motivo_baja"]').value = motivo;
+                form.submit();
+            }
+        });
+    });
+</script>
+@endpush

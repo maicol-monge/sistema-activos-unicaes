@@ -27,6 +27,29 @@ class Activo extends Model
         'observaciones',
     ];
 
+    public static function generarCodigo(): string
+    {
+        $prefijo = 'ACT-';
+
+        $ultimoCodigo = self::where('codigo', 'like', $prefijo . '%')
+            ->orderBy('id_activo', 'desc')
+            ->value('codigo');
+
+        $numero = 0;
+
+        if ($ultimoCodigo) {
+            $sufijo = substr($ultimoCodigo, strlen($prefijo));
+            $numero = (int) $sufijo;
+        }
+
+        do {
+            $numero++;
+            $nuevoCodigo = $prefijo . str_pad($numero, 3, '0', STR_PAD_LEFT);
+        } while (self::where('codigo', $nuevoCodigo)->exists());
+
+        return $nuevoCodigo;
+    }
+
     public function categoria()
     {
         return $this->belongsTo(CategoriaActivo::class, 'id_categoria_activo', 'id_categoria_activo');

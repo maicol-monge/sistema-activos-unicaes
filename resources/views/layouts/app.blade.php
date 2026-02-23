@@ -93,86 +93,131 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-                    @if(auth()->user()->rol === 'ADMIN')
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('users.index') }}">
-                            <i class="fa-solid fa-users me-1"></i> Usuarios
+                    @php $rol = auth()->user()->rol ?? null; @endphp
+
+                    @if($rol === 'ADMIN')
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarAdminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-gear me-1"></i> Administración
                         </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarAdminDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('activos.index') }}">
+                                    <i class="fa-solid fa-boxes-stacked me-1"></i> Inventario de Activos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('activos.aprobaciones') }}">
+                                    <i class="fa-solid fa-check-double me-1"></i> Aprobaciones de Activos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('asignaciones.index') }}">
+                                    <i class="fa-solid fa-clipboard-list me-1"></i> Asignaciones
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('bajas-activos.index') }}">
+                                    <i class="fa-solid fa-circle-down me-1"></i> Solicitudes de Baja
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('users.index') }}">
+                                    <i class="fa-solid fa-users me-1"></i> Usuarios
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('categorias-activos.index') }}">
+                                    <i class="fa-solid fa-tags me-1"></i> Categorías
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('categorias-activos.index') }}">
-                            <i class="fa-solid fa-tags me-1"></i> Categorías
-                        </a>
-                    </li>
+                    @endif
+
+                    @if($rol === 'INVENTARIADOR')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('activos.index') }}">
                             <i class="fa-solid fa-boxes-stacked me-1"></i> Activos
                         </a>
                     </li>
+                    @endif
+
+                    @if($rol === 'INVENTARIADOR')
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('activos.aprobaciones') }}">
-                            <i class="fa-solid fa-circle-check me-1"></i> Aprobaciones
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('asignaciones.index') }}">
-                            <i class="fa-solid fa-clipboard-list me-1"></i> Asignaciones
+                        <a class="nav-link" href="{{ route('asignaciones.create') }}">
+                            <i class="fa-solid fa-share-nodes me-1"></i> Asignar Activos
                         </a>
                     </li>
                     @endif
 
-                    @if(auth()->user()->rol === 'INVENTARIADOR')
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('activos.index') }}">
-                            <i class="fa-solid fa-boxes-stacked me-1"></i> Activos
+                    @if($rol === 'ADMIN')
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarMisAdminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-user-gear me-1"></i> Mis activos
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('activos.create') }}">
-                            <i class="fa-solid fa-plus me-1"></i> Registrar Activo
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('asignaciones.index') }}">
-                            <i class="fa-solid fa-clipboard-list me-1"></i> Asignaciones
-                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarMisAdminDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('activos.mis') }}">
+                                    <i class="fa-solid fa-laptop-file me-1"></i> Mis Activos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('asignaciones.mis') }}">
+                                    <i class="fa-solid fa-clipboard-list me-1"></i> Mis Asignaciones
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('encargado.reportes.index') }}">
+                                    <i class="fa-solid fa-clipboard-check me-1"></i> Reportar Estado
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('bajas-activos.create') }}">
+                                    <i class="fa-solid fa-minus-circle me-1"></i> Solicitar Baja
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     @endif
 
-                    @if(auth()->user()->rol === 'ENCARGADO')
+                    @if(in_array($rol, ['ENCARGADO', 'INVENTARIADOR', 'DECANO']))
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('activos.mis') }}">
-                            <i class="fa-solid fa-laptop me-1"></i> Mis Activos
+                            <i class="fa-solid fa-laptop-file me-1"></i> Mis Activos
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('asignaciones.mis') }}">
-                            <i class="fa-solid fa-inbox me-1"></i> Mis Asignaciones
+                            <i class="fa-solid fa-clipboard-list me-1"></i> Mis Asignaciones
                         </a>
                     </li>
+                    @endif
+
+                    @if(in_array($rol, ['ENCARGADO', 'DECANO']))
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('encargado.reportes.index') }}">
-                            <i class="fa-solid fa-clipboard-check me-1"></i> Mis Reportes
+                            <i class="fa-solid fa-clipboard-check me-1"></i> Reportar Estado
                         </a>
                     </li>
                     @endif
 
-                    @if(auth()->user()->rol === 'DECANO')
+                    @if(in_array($rol, ['ENCARGADO', 'INVENTARIADOR', 'DECANO']))
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('bajas-activos.create') }}">
+                            <i class="fa-solid fa-minus-circle me-1"></i> Solicitar Baja
+                        </a>
+                    </li>
+                    @endif
+
+                    @if($rol === 'DECANO')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('reportes.index') }}">
-                            <i class="fa-solid fa-file-contract me-1"></i> Reportes
+                            <i class="fa-solid fa-chart-line me-1"></i> Reportes y Consultas
                         </a>
                     </li>
                     @endif
-
-                    @if(in_array(auth()->user()->rol, ['ADMIN','INVENTARIADOR']))
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('encargados.index') }}">
-                            <i class="fa-solid fa-user-tie me-1"></i> Encargados
-                        </a>
-                    </li>
-                    @endif
-
                 </ul>
 
                 <div class="d-flex align-items-center text-white">

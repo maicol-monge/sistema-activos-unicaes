@@ -22,4 +22,14 @@ class MovimientoActivo extends Model
     {
         return 'id_movimiento';
     }
+
+    public function activo()
+    {
+        return $this->belongsTo(Activo::class, 'id_activo', 'id_activo');
+    }
+
+    public function usuario()
+    {
+        return $this->belongsTo(User::class, 'realizado_por', 'id_usuario');
+    }
 }
