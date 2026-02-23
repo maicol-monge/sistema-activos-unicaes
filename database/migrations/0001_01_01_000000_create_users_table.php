@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('correo', 50)->unique();
             $table->string('contrasena');
             $table->enum('rol', ['ADMIN', 'INVENTARIADOR', 'DECANO', 'ENCARGADO']);
+            $table->enum('tipo', ['PERSONA', 'UNIDAD'])->nullable();
             $table->boolean('estado')->default(true);
             $table->rememberToken();
             $table->timestamps();

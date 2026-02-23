@@ -90,10 +90,12 @@
                     <label class="form-label text-muted fw-bold">Encargado Responsable <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-user-tie"></i></span>
-                        <select name="id_encargado" class="form-select @error('id_encargado') is-invalid @enderror" required>
-                            <option value="" disabled {{ old('id_encargado') ? '' : 'selected' }}>-- Seleccione el encargado --</option>
+
+                        {{-- ✅ Encargado ahora es USER: id_usuario --}}
+                        <select name="id_usuario" class="form-select @error('id_usuario') is-invalid @enderror" required>
+                            <option value="" disabled {{ old('id_usuario') ? '' : 'selected' }}>-- Seleccione el encargado --</option>
                             @foreach($encargados as $e)
-                            <option value="{{ $e->id_encargado }}" @selected(old('id_encargado')==$e->id_encargado)>
+                            <option value="{{ $e->id_usuario }}" @selected(old('id_usuario')==$e->id_usuario)>
                                 {{ $e->nombre }} (Tipo: {{ $e->tipo }})
                             </option>
                             @endforeach
@@ -102,7 +104,7 @@
                     <div class="form-text mt-1" style="font-size: 0.85em;">
                         <i class="fa-solid fa-bell me-1 text-warning"></i> Se notificará al encargado para su aceptación.
                     </div>
-                    @error('id_encargado')
+                    @error('id_usuario')
                     <div class="text-danger mt-1 fw-semibold" style="font-size: 0.85em;">
                         <i class="fa-solid fa-circle-exclamation me-1"></i> {{ $message }}
                     </div>

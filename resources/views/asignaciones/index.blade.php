@@ -55,18 +55,54 @@
     </a>
 </div>
 
-@if(session('ok'))
-<div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #198754;">
-    <i class="fa-solid fa-circle-check me-2"></i> {{ session('ok') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="card shadow-sm border-0 mb-4" style="border-top: 4px solid var(--rojo-principal); border-radius: 8px;">
+    <div class="card-body p-3 p-md-4">
+        <form method="GET" action="{{ route('asignaciones.index') }}" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label text-muted fw-bold mb-1">Búsqueda</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" name="q" class="form-control" value="{{ $filtros['q'] ?? '' }}" placeholder="Activo, encargado o asignador...">
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label text-muted fw-bold mb-1">Estado</label>
+                <select name="estado_asignacion" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="PENDIENTE" @selected(($filtros['estado_asignacion'] ?? '' )==='PENDIENTE')>PENDIENTE</option>
+                    <option value="ACEPTADO" @selected(($filtros['estado_asignacion'] ?? '' )==='ACEPTADO')>ACEPTADO</option>
+                    <option value="RECHAZADO" @selected(($filtros['estado_asignacion'] ?? '' )==='RECHAZADO')>RECHAZADO</option>
+                    <option value="CARGADO" @selected(($filtros['estado_asignacion'] ?? '' )==='CARGADO')>DEVUELTO</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-muted fw-bold mb-1">Fecha desde</label>
+                <input type="date" name="fecha_desde" class="form-control" value="{{ $filtros['fecha_desde'] ?? '' }}">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-muted fw-bold mb-1">Fecha hasta</label>
+                <input type="date" name="fecha_hasta" class="form-control" value="{{ $filtros['fecha_hasta'] ?? '' }}">
+            </div>
+
+            <div class="col-12 d-flex justify-content-end gap-2 pt-2">
+                <a href="{{ route('asignaciones.index') }}" class="btn btn-light border">
+                    <i class="fa-solid fa-broom me-1"></i> Limpiar
+                </a>
+                <button type="submit" class="btn btn-nuevo">
+                    <i class="fa-solid fa-filter me-1"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
-@endif
 
 <div class="table-responsive bg-white rounded-3 shadow-sm border overflow-hidden">
     <table class="table table-custom table-hover mb-0">
         <thead>
             <tr>
-                <th class="ps-4">ID</th>
                 <th>Activo</th>
                 <th>Encargado</th>
                 <th class="text-center">Estado</th>
@@ -77,7 +113,6 @@
         <tbody>
             @forelse($asignaciones as $a)
             <tr>
-                <td class="ps-4 fw-bold text-muted">#{{ $a->id_asignacion }}</td>
 
                 <td>
                     <span class="fw-semibold text-dark">
@@ -89,7 +124,13 @@
                 <td>
                     <span class="text-dark">
                         <i class="fa-solid fa-user-tie me-1" style="color: var(--dorado);"></i>
-                        {{ $a->encargado?->nombre ?? 'Encargado no encontrado' }}
+
+                        {{-- ✅ Encargado ahora es Usuario (rol ENCARGADO) --}}
+                        {{ $a->encargadoUsuario?->nombre ?? 'Encargado no encontrado' }}
+
+                        @if($a->encargadoUsuario?->tipo)
+                        <span class="text-muted" style="font-size: 0.85em;">({{ $a->encargadoUsuario->tipo }})</span>
+                        @endif
                     </span>
                 </td>
 
@@ -105,6 +146,10 @@
                     @elseif($a->estado_asignacion === 'RECHAZADO')
                     <span class="badge badge-estado bg-danger bg-opacity-10 text-danger border border-danger">
                         <i class="fa-solid fa-xmark me-1"></i> RECHAZADO
+                    </span>
+                    @elseif($a->estado_asignacion === 'CARGADO')
+                    <span class="badge badge-estado bg-info bg-opacity-10 text-info border border-info">
+                        <i class="fa-solid fa-rotate-left me-1"></i> DEVUELTO
                     </span>
                     @else
                     <span class="badge badge-estado bg-secondary bg-opacity-10 text-secondary border border-secondary">

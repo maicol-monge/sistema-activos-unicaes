@@ -8,10 +8,31 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::orderBy('id_usuario', 'desc')->paginate(10);
-        return view('users.index', compact('users'));
+        $filtros = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'rol' => ['nullable', 'in:ADMIN,INVENTARIADOR,ENCARGADO,DECANO'],
+            'tipo' => ['nullable', 'in:PERSONA,UNIDAD'],
+            'estado' => ['nullable', 'in:0,1'],
+        ]);
+
+        $users = User::query()
+            ->when(!empty($filtros['q']), function ($query) use ($filtros) {
+                $texto = trim($filtros['q']);
+                $query->where(function ($sub) use ($texto) {
+                    $sub->where('nombre', 'like', "%{$texto}%")
+                        ->orWhere('correo', 'like', "%{$texto}%");
+                });
+            })
+            ->when(!empty($filtros['rol']), fn($query) => $query->where('rol', $filtros['rol']))
+            ->when(!empty($filtros['tipo']), fn($query) => $query->where('tipo', $filtros['tipo']))
+            ->when(isset($filtros['estado']) && $filtros['estado'] !== '', fn($query) => $query->where('estado', (int) $filtros['estado']))
+            ->orderBy('id_usuario', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('users.index', compact('users', 'filtros'));
     }
 
     public function create()
@@ -26,6 +47,7 @@ class UserController extends Controller
             'correo' => ['required', 'email', 'max:150', 'unique:users,correo'],
             'contrasena' => ['required', 'string', 'min:8'],
             'rol' => ['required', 'in:ADMIN,INVENTARIADOR,ENCARGADO,DECANO'],
+            'tipo' => ['required', 'in:PERSONA,UNIDAD'],
             'estado' => ['required', 'in:0,1'],
         ], [
             'correo.unique' => 'El correo electrónico ya está registrado.',
@@ -39,6 +61,7 @@ class UserController extends Controller
             'correo' => $request->correo,
             'contrasena' => Hash::make($request->contrasena),
             'rol' => $request->rol,
+            'tipo' => $request->tipo,
             'estado' => (int) $request->estado,
         ]);
 
@@ -56,6 +79,7 @@ class UserController extends Controller
             'nombre' => ['required', 'string', 'max:100'],
             'correo' => ['required', 'email', 'max:150', 'unique:users,correo,' . $user->id_usuario . ',id_usuario'],
             'rol' => ['required', 'in:ADMIN,INVENTARIADOR,ENCARGADO,DECANO'],
+            'tipo' => ['required', 'in:PERSONA,UNIDAD'],
             'estado' => ['required', 'in:0,1'],
             'contrasena' => ['nullable', 'string', 'min:8'],
         ], [
@@ -66,6 +90,7 @@ class UserController extends Controller
         $user->nombre = $request->nombre;
         $user->correo = $request->correo;
         $user->rol = $request->rol;
+        $user->tipo = $request->tipo;
         $user->estado = (int) $request->estado;
 
         if ($request->filled('contrasena')) {

@@ -42,6 +42,21 @@
         color: var(--rojo-oscuro);
         border: 1px solid var(--dorado);
     }
+
+    /* Botón de Filtrado (Consistencia con el sistema) */
+    .btn-filtrar-custom {
+        background-color: var(--dorado);
+        color: var(--rojo-oscuro);
+        font-weight: 700;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-filtrar-custom:hover {
+        background-color: #dca72c;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(237, 189, 63, 0.3);
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -51,6 +66,54 @@
     <a href="{{ route('encargados.create') }}" class="btn btn-nuevo shadow-sm">
         <i class="fa-solid fa-plus me-1"></i> Nuevo Encargado
     </a>
+</div>
+
+{{-- Panel de Filtros --}}
+<div class="card shadow-sm border-0 mb-4" style="border-top: 4px solid var(--rojo-principal); border-radius: 8px;">
+    <div class="card-body p-3 p-md-4">
+        <form method="GET" action="{{ route('encargados.index') }}" class="row g-3">
+
+            <div class="col-md-4">
+                <label class="form-label text-muted fw-bold mb-1">Nombre o Correo</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input
+                        type="text"
+                        name="q"
+                        class="form-control"
+                        value="{{ $filtros['q'] ?? '' }}"
+                        placeholder="Buscar por nombre o correo...">
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label text-muted fw-bold mb-1">Tipo</label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos los tipos</option>
+                    <option value="PERSONA" @selected(($filtros['tipo'] ?? '') === 'PERSONA')>PERSONA</option>
+                    <option value="UNIDAD" @selected(($filtros['tipo'] ?? '') === 'UNIDAD')>UNIDAD</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-muted fw-bold mb-1">Estado</label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="1" @selected(($filtros['estado'] ?? '') === '1')>Activo</option>
+                    <option value="0" @selected(($filtros['estado'] ?? '') === '0')>Inactivo</option>
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex justify-content-end gap-2 align-items-end">
+                <a href="{{ route('encargados.index') }}" class="btn btn-light border text-muted">
+                    <i class="fa-solid fa-broom me-1"></i> Limpiar
+                </a>
+                <button type="submit" class="btn btn-filtrar-custom px-4">
+                    <i class="fa-solid fa-filter me-1"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div class="table-responsive bg-white rounded-3 shadow-sm border overflow-auto" style="overflow-x:auto;">
@@ -76,11 +139,7 @@
                     </span>
                 </td>
                 <td>
-                    @if($e->user)
-                    <span class="text-muted"><i class="fa-regular fa-envelope me-1"></i> {{ $e->user->correo }}</span>
-                    @else
-                    <span class="text-muted fst-italic">— Sin cuenta —</span>
-                    @endif
+                    <span class="text-muted"><i class="fa-regular fa-envelope me-1"></i> {{ $e->correo }}</span>
                 </td>
                 <td>
                     @if($e->estado)
@@ -113,7 +172,7 @@
             <tr>
                 <td colspan="6" class="text-center py-5 text-muted">
                     <i class="fa-solid fa-user-slash fa-3x mb-3" style="color: #dee2e6;"></i>
-                    <p class="mb-0">No hay encargados registrados aún.</p>
+                    <p class="mb-0">No se encontraron encargados con los filtros seleccionados.</p>
                 </td>
             </tr>
             @endforelse
