@@ -96,34 +96,47 @@
                     @php $rol = auth()->user()->rol ?? null; @endphp
 
                     @if($rol === 'ADMIN')
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('users.index') }}">
-                            <i class="fa-solid fa-users me-1"></i> Usuarios
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarAdminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-gear me-1"></i> Administración
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('categorias-activos.index') }}">
-                            <i class="fa-solid fa-tags me-1"></i> Categorías
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('activos.aprobaciones') }}">
-                            <i class="fa-solid fa-check-double me-1"></i> Aprobaciones
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('asignaciones.index') }}">
-                            <i class="fa-solid fa-clipboard-list me-1"></i> Asignaciones
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('bajas-activos.index') }}">
-                            <i class="fa-solid fa-circle-down me-1"></i> Solicitudes de Baja
-                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarAdminDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('activos.index') }}">
+                                    <i class="fa-solid fa-boxes-stacked me-1"></i> Inventario de Activos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('activos.aprobaciones') }}">
+                                    <i class="fa-solid fa-check-double me-1"></i> Aprobaciones de Activos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('asignaciones.index') }}">
+                                    <i class="fa-solid fa-clipboard-list me-1"></i> Asignaciones
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('bajas-activos.index') }}">
+                                    <i class="fa-solid fa-circle-down me-1"></i> Solicitudes de Baja
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('users.index') }}">
+                                    <i class="fa-solid fa-users me-1"></i> Usuarios
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('categorias-activos.index') }}">
+                                    <i class="fa-solid fa-tags me-1"></i> Categorías
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     @endif
 
-                    @if(in_array($rol, ['ADMIN','INVENTARIADOR']))
+                    @if($rol === 'INVENTARIADOR')
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('activos.index') }}">
                             <i class="fa-solid fa-boxes-stacked me-1"></i> Activos
@@ -136,6 +149,36 @@
                         <a class="nav-link" href="{{ route('asignaciones.create') }}">
                             <i class="fa-solid fa-share-nodes me-1"></i> Asignar Activos
                         </a>
+                    </li>
+                    @endif
+
+                    @if($rol === 'ADMIN')
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarMisAdminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-user-gear me-1"></i> Mis activos
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarMisAdminDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('activos.mis') }}">
+                                    <i class="fa-solid fa-laptop-file me-1"></i> Mis Activos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('asignaciones.mis') }}">
+                                    <i class="fa-solid fa-clipboard-list me-1"></i> Mis Asignaciones
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('encargado.reportes.index') }}">
+                                    <i class="fa-solid fa-clipboard-check me-1"></i> Reportar Estado
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('bajas-activos.create') }}">
+                                    <i class="fa-solid fa-minus-circle me-1"></i> Solicitar Baja
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     @endif
 

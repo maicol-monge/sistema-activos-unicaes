@@ -148,6 +148,37 @@
         </a>
     </div>
 
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('activos.mis') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-laptop-file fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Mis Activos</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Ver los activos que tienes actualmente asignados como administrador.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('asignaciones.mis') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-clipboard-list fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Mis Asignaciones</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Aceptar, rechazar o devolver tus propias asignaciones de activos.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
     @elseif($rol === 'INVENTARIADOR')
     <div class="col-md-6 col-lg-4">
         <a href="{{ route('activos.index') }}" class="text-decoration-none text-dark">
