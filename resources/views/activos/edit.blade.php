@@ -56,10 +56,10 @@
 
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label class="form-label text-muted fw-bold">Código <span class="text-danger">*</span></label>
+                    <label class="form-label text-muted fw-bold">Código</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-hashtag"></i></span>
-                        <input type="text" name="codigo" class="form-control" value="{{ old('codigo', $activo->codigo) }}" required>
+                        <input type="text" name="codigo" class="form-control" value="{{ old('codigo', $activo->codigo) }}" readonly>
                     </div>
                 </div>
 

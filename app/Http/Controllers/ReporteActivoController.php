@@ -54,7 +54,7 @@ class ReporteActivoController extends Controller
         ]);
 
         $activosIds = AsignacionActivo::query()
-            ->where('id_usuario', $usuarioId)
+            ->where('asignado_a', $usuarioId)
             ->where('estado', 1)
             ->where('estado_asignacion', 'ACEPTADO')
             ->pluck('id_activo');
@@ -81,7 +81,7 @@ class ReporteActivoController extends Controller
         $usuarioId = auth()->user()->id_usuario;
 
         $activosIds = AsignacionActivo::query()
-            ->where('id_usuario', $usuarioId)
+            ->where('asignado_a', $usuarioId)
             ->where('estado', 1)
             ->where('estado_asignacion', 'ACEPTADO')
             ->pluck('id_activo');
@@ -104,7 +104,7 @@ class ReporteActivoController extends Controller
         $usuarioId = auth()->user()->id_usuario;
 
         $activosIds = AsignacionActivo::query()
-            ->where('id_usuario', $usuarioId)
+            ->where('asignado_a', $usuarioId)
             ->where('estado', 1)
             ->where('estado_asignacion', 'ACEPTADO')
             ->pluck('id_activo')
@@ -143,7 +143,7 @@ class ReporteActivoController extends Controller
         $usuarioId = auth()->user()->id_usuario;
 
         $puedeVer = AsignacionActivo::query()
-            ->where('id_usuario', $usuarioId)
+            ->where('asignado_a', $usuarioId)
             ->where('id_activo', $activo->id_activo)
             ->exists();
 

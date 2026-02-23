@@ -45,13 +45,19 @@ Route::middleware('auth')->group(function () {
             ->name('activos.aprobar');
         Route::post('/activos/{activo}/rechazar', [ActivoController::class, 'rechazar'])
             ->name('activos.rechazar');
+        Route::post('/activos/{activo}/baja-directa', [ActivoController::class, 'bajaDirecta'])
+            ->name('activos.baja-directa');
+        Route::get('/activos/{activo}/historial', [ActivoController::class, 'historial'])
+            ->name('activos.historial');
     });
 
     Route::middleware('role:INVENTARIADOR')->group(function () {
         Route::get('/inventario', [ActivoController::class, 'index'])->name('inventario.index');
     });
 
-    Route::middleware('role:ENCARGADO')->group(function () {
+    // ENCARGADO, INVENTARIADOR y DECANO pueden ver sus activos y sus asignaciones,
+    // y gestionar la aceptación / rechazo / devolución de lo que les asignen.
+    Route::middleware('role:ENCARGADO,INVENTARIADOR,DECANO')->group(function () {
         Route::get('/mis-activos', [AsignacionActivoController::class, 'misActivos'])->name('activos.mis');
         Route::get('/mis-asignaciones', [AsignacionActivoController::class, 'misAsignaciones'])
             ->name('asignaciones.mis');
@@ -81,16 +87,46 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['auth', 'role:ADMIN,INVENTARIADOR'])->group(function () {
         Route::resource('encargados', EncargadoController::class)->except(['show']);
         Route::resource('activos', ActivoController::class)->except(['show', 'destroy']);
-        Route::get('/asignaciones', [AsignacionActivoController::class, 'index'])
-            ->name('asignaciones.index');
+    });
+
+    // ADMIN, INVENTARIADOR y ENCARGADO pueden crear solicitudes de asignación
+    Route::middleware('role:ADMIN,INVENTARIADOR,ENCARGADO')->group(function () {
         Route::get('/asignaciones/create', [AsignacionActivoController::class, 'create'])->name('asignaciones.create');
         Route::post('/asignaciones', [AsignacionActivoController::class, 'store'])->name('asignaciones.store');
+    });
+
+    // ADMIN, ENCARGADO, INVENTARIADOR y DECANO pueden crear solicitudes de baja
+    Route::middleware('role:ADMIN,ENCARGADO,INVENTARIADOR,DECANO')->group(function () {
+        Route::get('/bajas-activos/create', [BajaActivoController::class, 'create'])
+            ->name('bajas-activos.create');
+        Route::post('/bajas-activos', [BajaActivoController::class, 'store'])
+            ->name('bajas-activos.store');
     });
 
     Route::middleware('role:ADMIN')->group(function () {
         Route::resource('reportes-activos', ReporteActivoController::class);
         Route::resource('movimientos-activos', MovimientoActivoController::class);
-        Route::resource('bajas-activos', BajaActivoController::class);
+
+        // Solo ADMIN ve listado completo de asignaciones y gestiona bajas
+        Route::get('/asignaciones', [AsignacionActivoController::class, 'index'])
+            ->name('asignaciones.index');
+
+        // ADMIN gestiona devoluciones de activos
+        Route::post('/asignaciones/{asignacion}/devolucion/aceptar', [AsignacionActivoController::class, 'aceptarDevolucion'])
+            ->name('asignaciones.devolucion.aceptar');
+        Route::post('/asignaciones/{asignacion}/devolucion/rechazar', [AsignacionActivoController::class, 'rechazarDevolucion'])
+            ->name('asignaciones.devolucion.rechazar');
+
+        Route::get('/bajas-activos/solicitudes', [BajaActivoController::class, 'solicitudes'])
+            ->name('bajas-activos.solicitudes');
+        Route::post('/bajas-activos/{baja}/rechazar', [BajaActivoController::class, 'rechazar'])
+            ->name('bajas-activos.rechazar');
+
+        // ADMIN puede forzar la devolución / cierre de una asignación
+        Route::post('/asignaciones/{asignacion}/forzar-devolucion', [AsignacionActivoController::class, 'forzarDevolucion'])
+            ->name('asignaciones.forzar-devolucion');
+        Route::resource('bajas-activos', BajaActivoController::class)->except(['create', 'store']);
+
         Route::resource('eliminaciones-activos', EliminacionActivoController::class);
     });
 });
