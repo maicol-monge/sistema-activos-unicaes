@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activo;
+use App\Models\AsignacionActivo;
 use App\Models\CategoriaActivo;
 use App\Models\MovimientoActivo;
+use App\Models\BajaActivo;
 use App\Models\User;
+use App\Services\FacturaActivoAiService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class ActivoController extends Controller
@@ -60,6 +64,52 @@ class ActivoController extends Controller
         return view('activos.create', compact('categorias'));
     }
 
+    /**
+     * Analiza una factura o documento de compra con un servicio de IA externo
+     * y devuelve posibles datos para precargar el formulario de activo.
+     */
+    public function analizarFactura(Request $request, FacturaActivoAiService $aiService)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'factura' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp'],
+            ], [
+                'factura.required' => 'Debes seleccionar un archivo de factura o documento.',
+                'factura.mimes' => 'El archivo debe ser PDF o una imagen (jpg, jpeg, png, webp).',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => $validator->errors()->first('factura') ?? 'El archivo de factura no es válido.',
+                ], 422);
+            }
+
+            if (!$request->hasFile('factura')) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'No se recibió ningún archivo de factura.',
+                ], 422);
+            }
+
+            $datos = $aiService->extraerDatos($request->file('factura'));
+
+            return response()->json([
+                'ok' => true,
+                'data' => $datos,
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => config('app.debug')
+                    ? 'No se pudieron extraer datos de la factura. Detalle: ' . $e->getMessage()
+                    : 'No se pudieron extraer datos de la factura. Inténtalo de nuevo o completa el formulario manualmente.',
+            ], 500);
+        }
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -94,7 +144,7 @@ class ActivoController extends Controller
         $esAdmin = $usuario->rol === 'ADMIN';
 
         if (blank($data['codigo'] ?? null)) {
-            $data['codigo'] = 'ACT-' . now()->format('YmdHis') . '-' . random_int(100, 999);
+            $data['codigo'] = Activo::generarCodigo();
         }
 
         $data['estado'] = $esAdmin ? 'APROBADO' : 'PENDIENTE';
@@ -130,12 +180,18 @@ class ActivoController extends Controller
     {
         $usuario = auth()->user();
 
-        if ($activo->estado === 'APROBADO') {
+        if ($usuario->rol !== 'ADMIN' && $activo->estado === 'APROBADO') {
             return redirect()->route('activos.index')->with('err', 'No se puede editar un activo aprobado.');
         }
 
-        if ($usuario->rol === 'INVENTARIADOR' && $activo->registrado_por !== $usuario->id_usuario) {
-            return redirect()->route('activos.index')->with('err', 'Solo puedes editar activos registrados por ti.');
+        if ($usuario->rol === 'INVENTARIADOR') {
+            if ($activo->registrado_por !== $usuario->id_usuario) {
+                return redirect()->route('activos.index')->with('err', 'Solo puedes editar activos registrados por ti.');
+            }
+
+            if ($activo->estado !== 'PENDIENTE') {
+                return redirect()->route('activos.index')->with('err', 'Solo puedes editar activos que están en estado PENDIENTE.');
+            }
         }
 
         $categorias = CategoriaActivo::where('estado', 1)->orderBy('nombre')->get();
@@ -146,12 +202,18 @@ class ActivoController extends Controller
     {
         $usuario = auth()->user();
 
-        if ($activo->estado === 'APROBADO') {
+        if ($usuario->rol !== 'ADMIN' && $activo->estado === 'APROBADO') {
             return redirect()->route('activos.index')->with('err', 'No se puede editar un activo aprobado.');
         }
 
-        if ($usuario->rol === 'INVENTARIADOR' && $activo->registrado_por !== $usuario->id_usuario) {
-            return redirect()->route('activos.index')->with('err', 'Solo puedes editar activos registrados por ti.');
+        if ($usuario->rol === 'INVENTARIADOR') {
+            if ($activo->registrado_por !== $usuario->id_usuario) {
+                return redirect()->route('activos.index')->with('err', 'Solo puedes editar activos registrados por ti.');
+            }
+
+            if ($activo->estado !== 'PENDIENTE') {
+                return redirect()->route('activos.index')->with('err', 'Solo puedes editar activos que están en estado PENDIENTE.');
+            }
         }
 
         $data = $request->validate([
@@ -202,6 +264,73 @@ class ActivoController extends Controller
     public function destroy(string $id)
     {
         abort(404);
+    }
+
+    public function bajaDirecta(Request $request, Activo $activo): RedirectResponse
+    {
+        $usuario = auth()->user();
+
+        if ($usuario->rol !== 'ADMIN') {
+            abort(403, 'No autorizado');
+        }
+
+        if ($activo->estado === 'BAJA') {
+            return back()->with('err', 'El activo ya se encuentra en estado BAJA.');
+        }
+
+        if ($activo->estado !== 'APROBADO') {
+            return back()->with('err', 'Solo se pueden dar de baja directa activos en estado APROBADO.');
+        }
+
+        $data = $request->validate([
+            'motivo_baja' => ['required', 'string', 'max:255'],
+        ], [
+            'motivo_baja.required' => 'El motivo de la baja es obligatorio.',
+        ]);
+
+        DB::transaction(function () use ($activo, $usuario, $data) {
+            // Registrar solicitud de baja efectiva (tipo administrativa) para historial
+            BajaActivo::create([
+                'id_activo' => $activo->id_activo,
+                'id_usuario_solicitante' => $usuario->id_usuario,
+                'motivo' => $data['motivo_baja'],
+                'estado' => 'APROBADA',
+            ]);
+
+            // Cambiar estado del activo
+            $activo->estado = 'BAJA';
+            $activo->observaciones = $data['motivo_baja'];
+            $activo->save();
+
+            // Cerrar cualquier asignación activa asociada a este activo
+            $asignacionesActivas = AsignacionActivo::where('id_activo', $activo->id_activo)
+                ->where('estado', 1)
+                ->get();
+
+            foreach ($asignacionesActivas as $asignacion) {
+                // Si estaba pendiente, se marca como RECHAZADO; si no, se marca como CARGADO (cerrada)
+                $nuevoEstadoAsignacion = $asignacion->estado_asignacion === 'PENDIENTE'
+                    ? 'RECHAZADO'
+                    : 'CARGADO';
+
+                $asignacion->estado_asignacion = $nuevoEstadoAsignacion;
+                $asignacion->estado = 0;
+                $asignacion->fecha_respuesta = now();
+                $asignacion->save();
+            }
+
+            // Registrar movimiento de baja
+            MovimientoActivo::create([
+                'id_activo' => $activo->id_activo,
+                'realizado_por' => $usuario->id_usuario,
+                'tipo' => 'BAJA',
+                'observaciones' => 'Baja directa por administrador. Motivo: ' . $data['motivo_baja'],
+                'fecha' => now()->toDateString(),
+                'estado' => 1,
+            ]);
+        });
+
+        return redirect()->route('activos.index')->with('ok', 'El activo ha sido dado de baja correctamente.');
     }
 
     public function aprobaciones(Request $request)
@@ -400,5 +529,38 @@ class ActivoController extends Controller
         });
 
         return redirect()->route('activos.aprobaciones')->with('ok', 'Activo rechazado correctamente.');
+    }
+
+    public function historial(Activo $activo)
+    {
+        $usuario = auth()->user();
+
+        if ($usuario->rol !== 'ADMIN') {
+            abort(403, 'No autorizado');
+        }
+
+        $activo->load(['categoria', 'registrador', 'aprobador']);
+
+        $asignaciones = $activo->asignaciones()
+            ->with(['usuarioAsignado', 'usuarioAsignador'])
+            ->orderByDesc('fecha_asignacion')
+            ->orderByDesc('id_asignacion')
+            ->get();
+
+        $asignacionActual = $activo->asignaciones()
+            ->with(['usuarioAsignado'])
+            ->where('estado', 1)
+            ->whereIn('estado_asignacion', ['ACEPTADO', 'DEVOLUCION'])
+            ->orderByDesc('fecha_asignacion')
+            ->orderByDesc('id_asignacion')
+            ->first();
+
+        $movimientos = $activo->movimientos()
+            ->with('usuario')
+            ->orderByDesc('fecha')
+            ->orderByDesc('id_movimiento')
+            ->get();
+
+        return view('activos.historial', compact('activo', 'asignacionActual', 'asignaciones', 'movimientos'));
     }
 }

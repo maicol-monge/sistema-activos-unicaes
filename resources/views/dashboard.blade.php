@@ -58,15 +58,30 @@
 
     @if($rol === 'ADMIN')
     <div class="col-md-6 col-lg-4">
-        <a href="{{ route('users.index') }}" class="text-decoration-none text-dark">
+        <a href="{{ route('activos.index') }}" class="text-decoration-none text-dark">
             <div class="card card-module shadow-sm h-100 p-3">
                 <div class="card-body d-flex align-items-center">
                     <div class="icon-wrapper me-3">
-                        <i class="fa-solid fa-users-gear fa-2x"></i>
+                        <i class="fa-solid fa-boxes-stacked fa-2x"></i>
                     </div>
                     <div>
-                        <h5 class="fw-bold mb-1">Gestión de Usuarios</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.85em;">Administrar accesos, roles y cuentas del sistema.</p>
+                        <h5 class="fw-bold mb-1">Inventario de Activos</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Consultar y gestionar todos los activos registrados.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('activos.aprobaciones') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-circle-check fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Aprobaciones de Activos</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Revisar y aprobar activos pendientes de validación.</p>
                     </div>
                 </div>
             </div>
@@ -88,15 +103,76 @@
         </a>
     </div>
     <div class="col-md-6 col-lg-4">
-        <a href="{{ route('activos.aprobaciones') }}" class="text-decoration-none text-dark">
+        <a href="{{ route('users.index') }}" class="text-decoration-none text-dark">
             <div class="card card-module shadow-sm h-100 p-3">
                 <div class="card-body d-flex align-items-center">
                     <div class="icon-wrapper me-3">
-                        <i class="fa-solid fa-circle-check fa-2x"></i>
+                        <i class="fa-solid fa-users-gear fa-2x"></i>
                     </div>
                     <div>
-                        <h5 class="fw-bold mb-1">Aprobaciones</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.85em;">Revisar y aprobar activos pendientes.</p>
+                        <h5 class="fw-bold mb-1">Gestión de Usuarios</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Administrar accesos, roles y cuentas del sistema.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('asignaciones.index') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-clipboard-list fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Asignaciones</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Revisar y gestionar todas las asignaciones de activos.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('bajas-activos.index') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-circle-down fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Solicitudes de Baja</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Aprobar, rechazar y controlar las bajas de activos.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('activos.mis') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-laptop-file fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Mis Activos</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Ver los activos que tienes actualmente asignados como administrador.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('asignaciones.mis') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-clipboard-list fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Mis Asignaciones</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Aceptar, rechazar o devolver tus propias asignaciones de activos.</p>
                     </div>
                 </div>
             </div>
@@ -113,22 +189,67 @@
                     </div>
                     <div>
                         <h5 class="fw-bold mb-1">Inventario General</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.85em;">Registrar, clasificar y gestionar todos los activos.</p>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Registrar activos y dar seguimiento a su estado.</p>
                     </div>
                 </div>
             </div>
         </a>
     </div>
     <div class="col-md-6 col-lg-4">
-        <a href="{{ route('asignaciones.index') }}" class="text-decoration-none text-dark">
+        <a href="{{ route('asignaciones.create') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-share-nodes fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Asignar Activos</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Generar nuevas asignaciones sobre activos aprobados.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('activos.mis') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-laptop-file fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Mis Activos</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Ver los activos que tienes actualmente asignados.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('asignaciones.mis') }}" class="text-decoration-none text-dark">
             <div class="card card-module shadow-sm h-100 p-3">
                 <div class="card-body d-flex align-items-center">
                     <div class="icon-wrapper me-3">
                         <i class="fa-solid fa-clipboard-list fa-2x"></i>
                     </div>
                     <div>
-                        <h5 class="fw-bold mb-1">Asignaciones</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.85em;">Gestionar asignaciones de activos a encargados.</p>
+                        <h5 class="fw-bold mb-1">Mis Asignaciones</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Aceptar, rechazar o revisar tus asignaciones.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('bajas-activos.create') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-arrow-down-long fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Solicitar Baja</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Pedir baja de activos que ya no usas.</p>
                     </div>
                 </div>
             </div>
@@ -152,6 +273,21 @@
         </a>
     </div>
     <div class="col-md-6 col-lg-4">
+        <a href="{{ route('asignaciones.mis') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-clipboard-list fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Mis Asignaciones</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Aceptar, rechazar o devolver asignaciones de activos.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
         <a href="{{ route('encargado.reportes.index') }}" class="text-decoration-none text-dark">
             <div class="card card-module shadow-sm h-100 p-3">
                 <div class="card-body d-flex align-items-center">
@@ -166,8 +302,83 @@
             </div>
         </a>
     </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('bajas-activos.create') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-arrow-down-long fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Solicitar Baja</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Enviar solicitudes de baja de tus activos asignados.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
 
     @elseif($rol === 'DECANO')
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('activos.mis') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-laptop-file fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Mis Activos</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Consultar los bienes bajo tu responsabilidad.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('asignaciones.mis') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-clipboard-list fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Mis Asignaciones</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Aceptar, rechazar o devolver asignaciones de activos.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('encargado.reportes.index') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-clipboard-check fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Reportar Estado</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Informar estado y consultar historial por activo.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('bajas-activos.create') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-arrow-down-long fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Solicitar Baja</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Enviar solicitudes de baja de tus activos.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
     <div class="col-md-6 col-lg-4">
         <a href="{{ route('reportes.index') }}" class="text-decoration-none text-dark">
             <div class="card card-module shadow-sm h-100 p-3">
