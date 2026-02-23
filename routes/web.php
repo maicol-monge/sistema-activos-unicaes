@@ -55,9 +55,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/inventario', [ActivoController::class, 'index'])->name('inventario.index');
     });
 
-    // ENCARGADO, INVENTARIADOR y DECANO pueden ver sus activos y sus asignaciones,
+    // ADMIN, ENCARGADO, INVENTARIADOR y DECANO pueden ver sus activos y sus asignaciones,
     // y gestionar la aceptación / rechazo / devolución de lo que les asignen.
-    Route::middleware('role:ENCARGADO,INVENTARIADOR,DECANO')->group(function () {
+    Route::middleware('role:ADMIN,ENCARGADO,INVENTARIADOR,DECANO')->group(function () {
         Route::get('/mis-activos', [AsignacionActivoController::class, 'misActivos'])->name('activos.mis');
         Route::get('/mis-asignaciones', [AsignacionActivoController::class, 'misAsignaciones'])
             ->name('asignaciones.mis');
