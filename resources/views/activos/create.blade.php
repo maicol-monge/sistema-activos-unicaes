@@ -50,10 +50,24 @@
 
 <div class="card shadow-sm border-0" style="border-top: 4px solid var(--rojo-principal); border-radius: 8px;">
     <div class="card-body p-4">
-        <form method="POST" action="{{ route('activos.store') }}">
+        <form method="POST" action="{{ route('activos.store') }}" enctype="multipart/form-data">
             @csrf
 
             <div class="row">
+                <div class="col-md-8 mb-3">
+                    <label class="form-label text-muted fw-bold">Factura / Documento del activo (opcional)</label>
+                    <input type="file" name="factura" id="factura" class="form-control" accept="application/pdf,image/*">
+                    <div class="form-text" style="font-size: 0.85em;">
+                        <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i>
+                        Puedes cargar la factura o documento de compra para intentar completar automáticamente los datos con IA.
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3 d-flex align-items-end">
+                    <button type="button" id="btn-extraer-ia" class="btn btn-outline-warning w-100">
+                        <i class="fa-solid fa-robot me-1"></i> Extraer datos con IA
+                    </button>
+                </div>
+
                 <div class="col-md-12 mb-3">
                     <label class="form-label text-muted fw-bold">Nombre <span class="text-danger">*</span></label>
                     <div class="input-group">
@@ -173,6 +187,108 @@
 
         serial.addEventListener('input', toggleDescripcionRequired);
         toggleDescripcionRequired();
+
+        // --------- IA: extraer datos desde la factura ---------
+        const facturaInput = document.getElementById('factura');
+        const btnExtraerIa = document.getElementById('btn-extraer-ia');
+
+        if (btnExtraerIa && facturaInput) {
+            btnExtraerIa.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                if (!facturaInput.files || !facturaInput.files.length) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Sin archivo',
+                        text: 'Primero selecciona la factura o documento que deseas analizar.',
+                    });
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('factura', facturaInput.files[0]);
+                formData.append('_token', '{{ csrf_token() }}');
+
+                btnExtraerIa.disabled = true;
+                const originalText = btnExtraerIa.innerHTML;
+                btnExtraerIa.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Analizando...';
+
+                fetch('{{ route('activos.analizar-factura') }}', {
+                        method: 'POST',
+                        body: formData,
+                    })
+                    .then(async (response) => {
+                        const contentType = response.headers.get('content-type') || '';
+                        const raw = await response.text();
+                        let data = null;
+
+                        if (contentType.includes('application/json')) {
+                            try {
+                                data = JSON.parse(raw);
+                            } catch (e) {
+                                // Ignorar error de parseo, se manejará abajo
+                            }
+                        }
+
+                        if (!response.ok || !data || data.ok === false) {
+                            let message = (data && data.message) ? data.message : 'No se pudieron extraer datos de la factura.';
+
+                            if (response.status === 419 || response.status === 401) {
+                                message = 'Tu sesión ha expirado o no está autorizada para esta acción. Vuelve a iniciar sesión e inténtalo de nuevo.';
+                            }
+
+                            if (!contentType.includes('application/json') && raw.startsWith('<')) {
+                                // Respuesta HTML (por ejemplo, error de Laravel)
+                                message = 'El servidor devolvió una respuesta inesperada. Revisa la consola o el log para más detalles.';
+                            }
+
+                            throw new Error(message);
+                        }
+
+                        const sugeridos = data.data || {};
+
+                        // Rellenar campos si vienen en la respuesta
+                        if (sugeridos.nombre) {
+                            document.querySelector('input[name="nombre"]').value = sugeridos.nombre;
+                        }
+                        if (sugeridos.marca) {
+                            document.querySelector('input[name="marca"]').value = sugeridos.marca;
+                        }
+                        if (sugeridos.serial) {
+                            document.querySelector('input[name="serial"]').value = sugeridos.serial;
+                        }
+                        if (sugeridos.descripcion) {
+                            document.querySelector('textarea[name="descripcion"]').value = sugeridos.descripcion;
+                        }
+                        if (sugeridos.fecha_adquisicion) {
+                            document.querySelector('input[name="fecha_adquisicion"]').value = sugeridos.fecha_adquisicion;
+                        }
+                        if (sugeridos.valor_compra) {
+                            document.querySelector('input[name="valor_compra"]').value = sugeridos.valor_compra;
+                        }
+                        if (sugeridos.tipo && ['FIJO', 'INTANGIBLE'].includes(sugeridos.tipo)) {
+                            document.querySelector('select[name="tipo"]').value = sugeridos.tipo;
+                        }
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Datos sugeridos cargados',
+                            text: 'Revisa y ajusta los datos antes de guardar el activo.',
+                        });
+                    })
+                    .catch((error) => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error al analizar factura',
+                            text: error.message || 'Ocurrió un error al procesar el archivo.',
+                        });
+                    })
+                    .finally(() => {
+                        btnExtraerIa.disabled = false;
+                        btnExtraerIa.innerHTML = originalText;
+                    });
+            });
+        }
     });
 </script>
 

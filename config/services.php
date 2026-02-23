@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // Servicio externo de IA para analizar facturas o documentos de compra
+    'facturas_ai' => [
+        'endpoint' => env('FACTURAS_AI_ENDPOINT'),
+        'api_key' => env('FACTURAS_AI_API_KEY'),
+    ],
+
 ];
