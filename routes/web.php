@@ -87,6 +87,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['auth', 'role:ADMIN,INVENTARIADOR'])->group(function () {
         Route::resource('encargados', EncargadoController::class)->except(['show']);
         Route::resource('activos', ActivoController::class)->except(['show', 'destroy']);
+        Route::post('/activos/analizar-factura', [ActivoController::class, 'analizarFactura'])
+            ->name('activos.analizar-factura');
     });
 
     // ADMIN, INVENTARIADOR y ENCARGADO pueden crear solicitudes de asignación

@@ -8,9 +8,11 @@ use App\Models\CategoriaActivo;
 use App\Models\MovimientoActivo;
 use App\Models\BajaActivo;
 use App\Models\User;
+use App\Services\FacturaActivoAiService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class ActivoController extends Controller
@@ -60,6 +62,52 @@ class ActivoController extends Controller
     {
         $categorias = CategoriaActivo::where('estado', 1)->orderBy('nombre')->get();
         return view('activos.create', compact('categorias'));
+    }
+
+    /**
+     * Analiza una factura o documento de compra con un servicio de IA externo
+     * y devuelve posibles datos para precargar el formulario de activo.
+     */
+    public function analizarFactura(Request $request, FacturaActivoAiService $aiService)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'factura' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp'],
+            ], [
+                'factura.required' => 'Debes seleccionar un archivo de factura o documento.',
+                'factura.mimes' => 'El archivo debe ser PDF o una imagen (jpg, jpeg, png, webp).',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => $validator->errors()->first('factura') ?? 'El archivo de factura no es válido.',
+                ], 422);
+            }
+
+            if (!$request->hasFile('factura')) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'No se recibió ningún archivo de factura.',
+                ], 422);
+            }
+
+            $datos = $aiService->extraerDatos($request->file('factura'));
+
+            return response()->json([
+                'ok' => true,
+                'data' => $datos,
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => config('app.debug')
+                    ? 'No se pudieron extraer datos de la factura. Detalle: ' . $e->getMessage()
+                    : 'No se pudieron extraer datos de la factura. Inténtalo de nuevo o completa el formulario manualmente.',
+            ], 500);
+        }
     }
 
     public function store(Request $request): RedirectResponse
