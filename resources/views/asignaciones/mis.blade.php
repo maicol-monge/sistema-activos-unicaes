@@ -91,6 +91,11 @@
     <h2 class="mb-0" style="color: var(--rojo-principal); font-weight: 700;">
         <i class="fa-solid fa-laptop-file me-2"></i> Mis Asignaciones
     </h2>
+    <div class="ms-auto">
+        <a href="{{ route('asignaciones.create') }}" class="btn btn-filtrar-custom">
+            <i class="fa-solid fa-link me-1"></i> Nueva Asignación
+        </a>
+    </div>
 </div>
 
 <div class="card shadow-sm border-0 mb-4" style="border-top: 4px solid var(--rojo-principal); border-radius: 8px;">
@@ -113,9 +118,9 @@
             <div class="col-md-4">
                 <label class="form-label text-muted fw-bold mb-1">Estado de Asignación</label>
                 <select name="estado_asignacion" class="form-select">
-                    <option value="">Todos los estados</option>
+                    <option value="" @selected(($filtros['estado_asignacion'] ?? 'PENDIENTE')==='')>Todos los estados</option>
                     @foreach(['PENDIENTE', 'ACEPTADO', 'RECHAZADO', 'DEVOLUCION', 'BAJA'] as $estado)
-                    <option value="{{ $estado }}" @selected(($filtros['estado_asignacion'] ?? '' )===$estado)>{{ $estado }}</option>
+                    <option value="{{ $estado }}" @selected(($filtros['estado_asignacion'] ?? 'PENDIENTE' )===$estado)>{{ $estado }}</option>
                     @endforeach
                 </select>
             </div>
@@ -167,9 +172,13 @@
                     <span class="badge bg-danger bg-opacity-10 text-danger border border-danger" style="font-size: 0.8rem;">
                         <i class="fa-solid fa-xmark me-1"></i> RECHAZADO
                     </span>
-                    @elseif($a->estado_asignacion === 'CARGADO' || $a->estado_asignacion === 'DEVOLUCION')
+                    @elseif($a->estado_asignacion === 'DEVOLUCION')
                     <span class="badge bg-info bg-opacity-10 text-info border border-info" style="font-size: 0.8rem;">
-                        <i class="fa-solid fa-rotate-left me-1"></i> DEVUELTO
+                        <i class="fa-solid fa-rotate-left me-1"></i> DEVOLUCIÓN PENDIENTE
+                    </span>
+                    @elseif($a->estado_asignacion === 'CARGADO')
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary" style="font-size: 0.8rem;">
+                        <i class="fa-solid fa-box-archive me-1"></i> DEVUELTO (CERRADO)
                     </span>
                     @else
                     <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary" style="font-size: 0.8rem;">
@@ -226,6 +235,10 @@
                             <i class="fa-solid fa-rotate-left me-1"></i> Devolver
                         </button>
                     </form>
+                    @elseif($a->estado_asignacion === 'DEVOLUCION' && (int)$a->estado === 1)
+                    <span class="text-muted small">
+                        <i class="fa-solid fa-hourglass-half me-1"></i> Devolución en revisión del administrador
+                    </span>
                     @else
                     <span class="text-muted small">
                         <i class="fa-solid fa-lock me-1"></i> Finalizado
@@ -250,3 +263,40 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        function bindSwalSubmit(selector, title, confirmText, icon = 'question') {
+            document.querySelectorAll(selector).forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const form = this.closest('form');
+                    if (!form) return;
+
+                    const message = this.dataset.message || '';
+
+                    Swal.fire({
+                        title: title,
+                        text: message,
+                        icon: icon,
+                        showCancelButton: true,
+                        confirmButtonColor: '#7e0001',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: confirmText,
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        }
+
+        bindSwalSubmit('.swal-aceptar', '¿Aceptar asignación?', 'Sí, aceptar', 'question');
+        bindSwalSubmit('.swal-rechazar', '¿Rechazar asignación?', 'Sí, rechazar', 'warning');
+        bindSwalSubmit('.swal-devolver', '¿Devolver activo?', 'Sí, devolver', 'info');
+    });
+</script>
+@endpush

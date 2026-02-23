@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('asignaciones_activos', function (Blueprint $table) {
             $table->id('id_asignacion');
             $table->foreignId('id_activo')->constrained(table: 'activos', column: 'id_activo');
-            $table->foreignId('id_usuario')->constrained(table: 'users', column: 'id_usuario');
+            $table->foreignId('asignado_a')->constrained(table: 'users', column: 'id_usuario');
             $table->foreignId('asignado_por')->constrained(table: 'users', column: 'id_usuario');
-            $table->enum('estado_asignacion', ['PENDIENTE', 'ACEPTADO', 'RECHAZADO', 'CARGADO']);
+            $table->enum('estado_asignacion', ['PENDIENTE', 'ACEPTADO', 'RECHAZADO', 'DEVOLUCION', 'CARGADO']);
             $table->dateTime('fecha_asignacion');
             $table->dateTime('fecha_respuesta')->nullable();
             $table->boolean('estado')->default(true);

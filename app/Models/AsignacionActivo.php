@@ -11,7 +11,7 @@ class AsignacionActivo extends Model
 
     protected $fillable = [
         'id_activo',
-        'id_usuario',
+        'asignado_a',
         'asignado_por',
         'estado_asignacion',
         'fecha_asignacion',
@@ -24,9 +24,9 @@ class AsignacionActivo extends Model
         return $this->belongsTo(\App\Models\Activo::class, 'id_activo', 'id_activo');
     }
 
-    public function encargadoUsuario()
+    public function usuarioAsignado()
     {
-        return $this->belongsTo(\App\Models\User::class, 'id_usuario', 'id_usuario');
+        return $this->belongsTo(\App\Models\User::class, 'asignado_a', 'id_usuario');
     }
 
     public function usuarioAsignador()

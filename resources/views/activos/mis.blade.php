@@ -56,6 +56,11 @@
     <h2 class="mb-0" style="color: var(--rojo-principal); font-weight: 700;">
         <i class="fa-solid fa-laptop-file me-2"></i> Mis Activos
     </h2>
+    <div class="ms-auto">
+        <a href="{{ route('asignaciones.create') }}" class="btn btn-filtrar-custom">
+            <i class="fa-solid fa-link me-1"></i> Nueva Asignación
+        </a>
+    </div>
 </div>
 
 <div class="card shadow-sm border-0 mb-4" style="border-top: 4px solid var(--rojo-principal); border-radius: 8px;">

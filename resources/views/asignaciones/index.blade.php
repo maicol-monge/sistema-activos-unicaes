@@ -73,6 +73,7 @@
                     <option value="PENDIENTE" @selected(($filtros['estado_asignacion'] ?? '' )==='PENDIENTE')>PENDIENTE</option>
                     <option value="ACEPTADO" @selected(($filtros['estado_asignacion'] ?? '' )==='ACEPTADO')>ACEPTADO</option>
                     <option value="RECHAZADO" @selected(($filtros['estado_asignacion'] ?? '' )==='RECHAZADO')>RECHAZADO</option>
+                    <option value="DEVOLUCION" @selected(($filtros['estado_asignacion'] ?? '' )==='DEVOLUCION')>DEVOLUCIÓN (pendiente)</option>
                     <option value="CARGADO" @selected(($filtros['estado_asignacion'] ?? '' )==='CARGADO')>DEVUELTO</option>
                 </select>
             </div>
@@ -108,6 +109,7 @@
                 <th class="text-center">Estado</th>
                 <th>Asignado por</th>
                 <th>Fecha y Hora</th>
+                <th class="text-center">Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -125,11 +127,11 @@
                     <span class="text-dark">
                         <i class="fa-solid fa-user-tie me-1" style="color: var(--dorado);"></i>
 
-                        {{-- ✅ Encargado ahora es Usuario (rol ENCARGADO) --}}
-                        {{ $a->encargadoUsuario?->nombre ?? 'Encargado no encontrado' }}
+                        {{-- ✅ Encargado ahora es el usuario asignado --}}
+                        {{ $a->usuarioAsignado?->nombre ?? 'Encargado no encontrado' }}
 
-                        @if($a->encargadoUsuario?->tipo)
-                        <span class="text-muted" style="font-size: 0.85em;">({{ $a->encargadoUsuario->tipo }})</span>
+                        @if($a->usuarioAsignado?->tipo)
+                        <span class="text-muted" style="font-size: 0.85em;">({{ $a->usuarioAsignado->tipo }})</span>
                         @endif
                     </span>
                 </td>
@@ -147,9 +149,13 @@
                     <span class="badge badge-estado bg-danger bg-opacity-10 text-danger border border-danger">
                         <i class="fa-solid fa-xmark me-1"></i> RECHAZADO
                     </span>
-                    @elseif($a->estado_asignacion === 'CARGADO')
+                    @elseif($a->estado_asignacion === 'DEVOLUCION')
                     <span class="badge badge-estado bg-info bg-opacity-10 text-info border border-info">
-                        <i class="fa-solid fa-rotate-left me-1"></i> DEVUELTO
+                        <i class="fa-solid fa-rotate-left me-1"></i> DEVOLUCIÓN PENDIENTE
+                    </span>
+                    @elseif($a->estado_asignacion === 'CARGADO')
+                    <span class="badge badge-estado bg-secondary bg-opacity-10 text-secondary border border-secondary">
+                        <i class="fa-solid fa-box-archive me-1"></i> DEVUELTO (CERRADO)
                     </span>
                     @else
                     <span class="badge badge-estado bg-secondary bg-opacity-10 text-secondary border border-secondary">
@@ -173,6 +179,39 @@
                         {{ \Carbon\Carbon::parse($a->fecha_asignacion)->format('H:i') }}
                     </div>
                 </td>
+
+                <td class="text-center">
+                    <div class="d-flex justify-content-center gap-1">
+                        @if($a->estado_asignacion === 'DEVOLUCION')
+                        <form method="POST" action="{{ route('asignaciones.devolucion.aceptar', $a) }}" class="m-0">
+                            @csrf
+                            <button type="button" class="btn btn-sm btn-success swal-aceptar-devolucion" title="Aceptar devolución">
+                                <i class="fa-solid fa-check"></i>
+                            </button>
+                        </form>
+
+                        <form method="POST" action="{{ route('asignaciones.devolucion.rechazar', $a) }}" class="m-0">
+                            @csrf
+                            <button type="button" class="btn btn-sm btn-danger swal-rechazar-devolucion" title="Rechazar devolución">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </form>
+                        @endif
+
+                        @if($a->estado_asignacion !== 'CARGADO' && (int)$a->estado === 1)
+                        <form method="POST" action="{{ route('asignaciones.forzar-devolucion', $a) }}" class="m-0">
+                            @csrf
+                            <button type="button" class="btn btn-sm btn-warning text-dark swal-forzar-devolucion" title="Forzar devolución / retirar asignación">
+                                <i class="fa-solid fa-hand-back-fist"></i>
+                            </button>
+                        </form>
+                        @endif
+
+                        @if($a->estado_asignacion === 'CARGADO' || (int)$a->estado === 0)
+                        <span class="text-muted">-</span>
+                        @endif
+                    </div>
+                </td>
             </tr>
             @empty
             <tr>
@@ -191,3 +230,38 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        function bindSwal(selector, title, text, confirmText, icon) {
+            document.querySelectorAll(selector).forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const form = this.closest('form');
+                    if (!form) return;
+
+                    Swal.fire({
+                        title: title,
+                        text: text,
+                        icon: icon,
+                        showCancelButton: true,
+                        confirmButtonColor: '#7e0001',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: confirmText,
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        }
+
+        bindSwal('.swal-aceptar-devolucion', '¿Aceptar devolución?', 'Confirmas que el activo ha sido recibido y devuelto correctamente.', 'Sí, aceptar', 'success');
+        bindSwal('.swal-rechazar-devolucion', '¿Rechazar devolución?', '¿Estás seguro de rechazar esta devolución? El activo seguirá asignado al usuario.', 'Sí, rechazar', 'warning');
+        bindSwal('.swal-forzar-devolucion', '¿Retirar asignación?', 'Esta acción cerrará la asignación seleccionada y el activo dejará de estar asignado al usuario actual.', 'Sí, retirar', 'warning');
+    });
+</script>
+@endpush

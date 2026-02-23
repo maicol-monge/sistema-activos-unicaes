@@ -54,15 +54,7 @@
             @csrf
 
             <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label text-muted fw-bold">Código</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fa-solid fa-hashtag"></i></span>
-                        <input type="text" name="codigo" class="form-control" value="{{ old('codigo') }}" placeholder="Opcional, autogenerado si vacío">
-                    </div>
-                </div>
-
-                <div class="col-md-8 mb-3">
+                <div class="col-md-12 mb-3">
                     <label class="form-label text-muted fw-bold">Nombre <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fa-solid fa-font"></i></span>

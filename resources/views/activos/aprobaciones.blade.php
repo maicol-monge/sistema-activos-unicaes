@@ -160,6 +160,24 @@
                 <td>{{ \Carbon\Carbon::parse($activo->fecha_registro)->format('d/m/Y') }}</td>
                 <td class="text-center pe-4">
                     <div class="d-flex justify-content-center gap-2">
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary btn-detalles"
+                            data-codigo="{{ $activo->codigo }}"
+                            data-nombre="{{ $activo->nombre }}"
+                            data-tipo="{{ $activo->tipo }}"
+                            data-condicion="{{ $activo->condicion }}"
+                            data-categoria="{{ $activo->categoria?->nombre }}"
+                            data-serial="{{ $activo->serial }}"
+                            data-marca="{{ $activo->marca }}"
+                            data-fecha="{{ \Carbon\Carbon::parse($activo->fecha_adquisicion)->format('d/m/Y') }}"
+                            data-valor="{{ number_format($activo->valor_compra, 2) }}"
+                            data-descripcion="{{ $activo->descripcion }}"
+                            data-registrador="{{ $activo->registrador?->nombre }}"
+                            data-registrador-correo="{{ $activo->registrador?->correo }}"
+                        >
+                            <i class="fa-solid fa-circle-info me-1"></i> Detalles
+                        </button>
                         <form method="POST" action="{{ route('activos.aprobar', $activo) }}">
                             @csrf
                             <button type="submit" class="btn btn-sm btn-aprobar">
@@ -313,6 +331,34 @@
                 form.querySelector('input[name="observaciones"]').value = observaciones;
                 form.submit();
             }
+        });
+
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.btn-detalles');
+            if (!btn) return;
+
+            const html = `
+                <div class="text-start">
+                    <p><strong>Código:</strong> ${btn.dataset.codigo || '-'} </p>
+                    <p><strong>Nombre:</strong> ${btn.dataset.nombre || '-'} </p>
+                    <p><strong>Tipo:</strong> ${btn.dataset.tipo || '-'} | <strong>Condición:</strong> ${btn.dataset.condicion || '-'} </p>
+                    <p><strong>Categoría:</strong> ${btn.dataset.categoria || '-'} </p>
+                    <p><strong>Serial:</strong> ${btn.dataset.serial || '-'} </p>
+                    <p><strong>Marca:</strong> ${btn.dataset.marca || '-'} </p>
+                    <p><strong>Fecha de adquisición:</strong> ${btn.dataset.fecha || '-'} </p>
+                    <p><strong>Valor de compra:</strong> $ ${btn.dataset.valor || '-'} </p>
+                    <p><strong>Registrado por:</strong> ${btn.dataset.registrador || '-'} (${btn.dataset.registradorCorreo || '-'}) </p>
+                    <hr>
+                    <p><strong>Descripción:</strong><br>${(btn.dataset.descripcion || '').trim() || '<span class="text-muted">Sin descripción</span>'}</p>
+                </div>
+            `;
+
+            Swal.fire({
+                title: 'Detalle del activo',
+                html,
+                width: 700,
+                confirmButtonText: 'Cerrar',
+            });
         });
     });
 </script>
