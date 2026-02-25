@@ -11,9 +11,18 @@ class BajaActivo extends Model
 
     protected $fillable = [
         'id_activo',
+        'id_usuario_solicitante',
         'motivo',
-        'dado_por',
-        'fecha',
         'estado',
     ];
+
+    public function activo()
+    {
+        return $this->belongsTo(\App\Models\Activo::class, 'id_activo', 'id_activo');
+    }
+
+    public function solicitante()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'id_usuario_solicitante', 'id_usuario');
+    }
 }

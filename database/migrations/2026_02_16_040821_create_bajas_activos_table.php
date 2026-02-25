@@ -14,10 +14,12 @@ return new class extends Migration
         Schema::create('bajas_activos', function (Blueprint $table) {
             $table->id('id_baja');
             $table->foreignId('id_activo')->constrained(table: 'activos', column: 'id_activo');
+            $table->foreignId('id_usuario_solicitante')->constrained(table: 'users', column: 'id_usuario');
             $table->text('motivo');
-            $table->foreignId('dado_por')->constrained(table: 'users', column: 'id_usuario');
-            $table->dateTime('fecha');
-            $table->boolean('estado')->default(true);
+
+            // Estado de la solicitud: PENDIENTE, APROBADA, RECHAZADA, etc.
+            $table->string('estado', 20)->default('PENDIENTE');
+
             $table->timestamps();
         });
     }

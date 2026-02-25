@@ -10,11 +10,33 @@ class EncargadoController extends Controller
 {
     public function index()
     {
-        // $encargados = Encargado::orderBy('id_encargado', 'desc')->paginate(10);
+        $request = request();
+
+        $filtros = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'tipo' => ['nullable', 'in:PERSONA,UNIDAD'],
+            'estado' => ['nullable', 'in:0,1'],
+        ]);
+
         $encargados = User::where('rol', 'ENCARGADO')
+            ->when(!empty($filtros['q']), function ($query) use ($filtros) {
+                $texto = trim($filtros['q']);
+                $query->where(function ($q) use ($texto) {
+                    $q->where('nombre', 'like', "%{$texto}%")
+                        ->orWhere('correo', 'like', "%{$texto}%");
+                });
+            })
+            ->when(isset($filtros['tipo']) && $filtros['tipo'] !== '', function ($query) use ($filtros) {
+                $query->where('tipo', $filtros['tipo']);
+            })
+            ->when(isset($filtros['estado']) && $filtros['estado'] !== '', function ($query) use ($filtros) {
+                $query->where('estado', $filtros['estado']);
+            })
             ->orderBy('id_usuario', 'desc')
-            ->paginate(10);
-        return view('encargados.index', compact('encargados'));
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('encargados.index', compact('encargados', 'filtros'));
     }
 
     public function create()
