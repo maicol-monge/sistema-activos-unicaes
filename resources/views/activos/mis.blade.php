@@ -166,9 +166,14 @@
                 </td>
                 <td class="text-center pe-4">
                     <div class="d-flex justify-content-center gap-2">
-                        <a class="btn btn-sm btn-comprobante" title="Descargar comprobante (PDF)" href="{{ route('asignaciones.comprobante', $a) }}">
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-comprobante js-comprobante-preview"
+                            title="Ver comprobante (PDF)"
+                            data-preview-url="{{ route('asignaciones.comprobante.preview', $a) }}"
+                            data-download-url="{{ route('asignaciones.comprobante', $a) }}">
                             <i class="fa-solid fa-receipt"></i>
-                        </a>
+                        </button>
 
                         <form method="POST" action="{{ route('asignaciones.devolver', $a) }}" class="m-0">
                             @csrf
@@ -195,11 +200,64 @@
     {{ $asignaciones->links() }}
 </div>
 
+<!-- Modal: Vista previa del comprobante -->
+<div class="modal fade" id="comprobantePreviewModal" tabindex="-1" aria-labelledby="comprobantePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="comprobantePreviewModalLabel">
+                    <i class="fa-solid fa-receipt me-2"></i> Vista previa del comprobante
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-0" style="height: min(75vh, 820px);">
+                <iframe
+                    id="comprobantePreviewFrame"
+                    title="Vista previa comprobante"
+                    src=""
+                    style="width: 100%; height: 100%; border: 0;">
+                </iframe>
+            </div>
+            <div class="modal-footer">
+                <a id="comprobanteDownloadBtn" class="btn btn-primary" href="#">
+                    <i class="fa-solid fa-download me-1"></i> Descargar PDF
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        const modalEl = document.getElementById('comprobantePreviewModal');
+        const iframeEl = document.getElementById('comprobantePreviewFrame');
+        const downloadBtn = document.getElementById('comprobanteDownloadBtn');
+        const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+
+        document.querySelectorAll('.js-comprobante-preview').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const previewUrl = btn.getAttribute('data-preview-url');
+                const downloadUrl = btn.getAttribute('data-download-url');
+
+                if (iframeEl && previewUrl) iframeEl.src = previewUrl;
+                if (downloadBtn && downloadUrl) downloadBtn.href = downloadUrl;
+
+                if (modal) modal.show();
+            });
+        });
+
+        // Limpia el iframe al cerrar para evitar que siga cargado en segundo plano.
+        if (modalEl && iframeEl) {
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                iframeEl.src = '';
+            });
+        }
+
         document.querySelectorAll('.swal-devolver').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();

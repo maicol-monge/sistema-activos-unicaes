@@ -84,6 +84,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/asignaciones/{asignacion}/comprobante', [AsignacionActivoController::class, 'comprobante'])
             ->name('asignaciones.comprobante');
+
+        Route::get('/asignaciones/{asignacion}/comprobante/preview', [AsignacionActivoController::class, 'comprobantePreview'])
+            ->name('asignaciones.comprobante.preview');
     });
 
     Route::middleware('role:DECANO')->group(function () {

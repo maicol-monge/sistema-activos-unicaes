@@ -385,15 +385,15 @@ class AsignacionActivoController extends Controller
             'usuarioAsignado',
         ]);
 
-        // La fecha de aceptación real se toma del movimiento (para no depender de fecha_respuesta,
-        // que también se usa para cierres/devoluciones).
+        // La fecha de aceptación real se toma del movimiento. Nota: `movimientos_activos.fecha`
+        // es tipo DATE (sin hora), por eso usamos `created_at` para mostrar fecha+hora.
         $id = (int) $asignacion->id_asignacion;
         $fechaAceptacion = MovimientoActivo::where('id_activo', $asignacion->id_activo)
             ->where('tipo', 'ASIGNACION')
             ->where('observaciones', 'like', "%ID asignación: {$id}%")
             ->where('observaciones', 'like', '%ACEPTADA%')
-            ->orderByDesc('fecha')
-            ->value('fecha');
+            ->orderByDesc('created_at')
+            ->value('created_at');
 
         $numero = 'COMP-' . str_pad((string) $asignacion->id_asignacion, 6, '0', STR_PAD_LEFT);
         $fileName = "{$numero}.pdf";
@@ -405,6 +405,40 @@ class AsignacionActivoController extends Controller
         ])->setPaper('letter');
 
         return $pdf->download($fileName);
+    }
+
+    public function comprobantePreview(AsignacionActivo $asignacion)
+    {
+        // ✅ Solo el usuario asignado puede ver el comprobante
+        if ($asignacion->asignado_a != auth()->user()->id_usuario) {
+            abort(403, 'No autorizado');
+        }
+
+        $asignacion->load([
+            'activo.categoria',
+            'usuarioAsignador',
+            'usuarioAsignado',
+        ]);
+
+        $id = (int) $asignacion->id_asignacion;
+        $fechaAceptacion = MovimientoActivo::where('id_activo', $asignacion->id_activo)
+            ->where('tipo', 'ASIGNACION')
+            ->where('observaciones', 'like', "%ID asignación: {$id}%")
+            ->where('observaciones', 'like', '%ACEPTADA%')
+            ->orderByDesc('created_at')
+            ->value('created_at');
+
+        $numero = 'COMP-' . str_pad((string) $asignacion->id_asignacion, 6, '0', STR_PAD_LEFT);
+        $fileName = "{$numero}.pdf";
+
+        $pdf = Pdf::loadView('asignaciones.comprobante-pdf', [
+            'asignacion' => $asignacion,
+            'fechaAceptacion' => $fechaAceptacion,
+            'numero' => $numero,
+        ])->setPaper('letter');
+
+        // `stream` sirve el PDF en el navegador (Content-Disposition: inline), ideal para iframe/modal.
+        return $pdf->stream($fileName);
     }
 
     public function aceptar(AsignacionActivo $asignacion)
