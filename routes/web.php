@@ -81,6 +81,9 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/asignaciones/{asignacion}/devolver', [AsignacionActivoController::class, 'devolver'])
             ->name('asignaciones.devolver');
+
+        Route::get('/asignaciones/{asignacion}/comprobante', [AsignacionActivoController::class, 'comprobante'])
+            ->name('asignaciones.comprobante');
     });
 
     Route::middleware('role:DECANO')->group(function () {

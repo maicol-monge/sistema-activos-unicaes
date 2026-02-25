@@ -6,6 +6,7 @@ use App\Models\AsignacionActivo;
 use App\Models\User;
 use App\Models\Activo;
 use App\Models\MovimientoActivo;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -369,6 +370,41 @@ class AsignacionActivoController extends Controller
         ]);
 
         return view('asignaciones.detalle', compact('asignacion'));
+    }
+
+    public function comprobante(AsignacionActivo $asignacion)
+    {
+        // ✅ Solo el usuario asignado puede ver el comprobante
+        if ($asignacion->asignado_a != auth()->user()->id_usuario) {
+            abort(403, 'No autorizado');
+        }
+
+        $asignacion->load([
+            'activo.categoria',
+            'usuarioAsignador',
+            'usuarioAsignado',
+        ]);
+
+        // La fecha de aceptación real se toma del movimiento (para no depender de fecha_respuesta,
+        // que también se usa para cierres/devoluciones).
+        $id = (int) $asignacion->id_asignacion;
+        $fechaAceptacion = MovimientoActivo::where('id_activo', $asignacion->id_activo)
+            ->where('tipo', 'ASIGNACION')
+            ->where('observaciones', 'like', "%ID asignación: {$id}%")
+            ->where('observaciones', 'like', '%ACEPTADA%')
+            ->orderByDesc('fecha')
+            ->value('fecha');
+
+        $numero = 'COMP-' . str_pad((string) $asignacion->id_asignacion, 6, '0', STR_PAD_LEFT);
+        $fileName = "{$numero}.pdf";
+
+        $pdf = Pdf::loadView('asignaciones.comprobante-pdf', [
+            'asignacion' => $asignacion,
+            'fechaAceptacion' => $fechaAceptacion,
+            'numero' => $numero,
+        ])->setPaper('letter');
+
+        return $pdf->download($fileName);
     }
 
     public function aceptar(AsignacionActivo $asignacion)

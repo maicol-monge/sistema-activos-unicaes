@@ -36,6 +36,20 @@
         box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
     }
 
+    .btn-comprobante {
+        background-color: transparent;
+        color: var(--rojo-principal);
+        border: 1px solid var(--rojo-principal);
+        transition: all 0.3s ease;
+    }
+
+    .btn-comprobante:hover {
+        background-color: var(--rojo-principal);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(126, 0, 1, 0.18);
+    }
+
     /* Botón de Filtrado (Dorado para consistencia) */
     .btn-filtrar-custom {
         background-color: var(--dorado);
@@ -151,12 +165,18 @@
                     @endif
                 </td>
                 <td class="text-center pe-4">
-                    <form method="POST" action="{{ route('asignaciones.devolver', $a) }}" class="m-0">
-                        @csrf
-                        <button type="button" class="btn btn-sm btn-devolver fw-bold swal-devolver" data-message="¿Confirmas la devolución de este activo? Esta acción cerrará tu asignación activa.">
-                            <i class="fa-solid fa-rotate-left me-1"></i> Devolver
-                        </button>
-                    </form>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a class="btn btn-sm btn-comprobante" title="Descargar comprobante (PDF)" href="{{ route('asignaciones.comprobante', $a) }}">
+                            <i class="fa-solid fa-receipt"></i>
+                        </a>
+
+                        <form method="POST" action="{{ route('asignaciones.devolver', $a) }}" class="m-0">
+                            @csrf
+                            <button type="button" class="btn btn-sm btn-devolver fw-bold swal-devolver" data-message="¿Confirmas la devolución de este activo? Esta acción cerrará tu asignación activa." title="Devolver">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             @empty
