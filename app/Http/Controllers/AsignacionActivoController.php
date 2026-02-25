@@ -141,6 +141,25 @@ class AsignacionActivoController extends Controller
         return view('asignaciones.index', compact('asignaciones', 'filtros'));
     }
 
+    public function detalleAdmin(AsignacionActivo $asignacion)
+    {
+        $usuario = auth()->user();
+
+        if (!$usuario || $usuario->rol !== 'ADMIN') {
+            abort(403, 'No autorizado');
+        }
+
+        $asignacion->load([
+            'activo.categoria',
+            'activo.registrador',
+            'activo.aprobador',
+            'usuarioAsignador',
+            'usuarioAsignado',
+        ]);
+
+        return view('asignaciones.detalle-admin', compact('asignacion'));
+    }
+
     public function create()
     {
         $usuario = auth()->user();
@@ -197,7 +216,7 @@ class AsignacionActivoController extends Controller
 
         if (!$u || !in_array($u->rol, ['ENCARGADO', 'DECANO', 'INVENTARIADOR', 'ADMIN']) || (int)$u->estado !== 1) {
             return back()
-            ->with('err', 'Debe seleccionar un usuario activo con rol ENCARGADO, DECANO, INVENTARIADOR o ADMIN.')
+                ->with('err', 'Debe seleccionar un usuario activo con rol ENCARGADO, DECANO, INVENTARIADOR o ADMIN.')
                 ->withInput();
         }
 
@@ -331,6 +350,27 @@ class AsignacionActivoController extends Controller
         return view('asignaciones.mis', compact('asignaciones', 'filtros'));
     }
 
+    public function detalle(AsignacionActivo $asignacion)
+    {
+        // Actualizar estados de asignaciones vencidas antes de mostrar el detalle
+        $this->rechazarAsignacionesVencidas();
+
+        // ✅ Solo el usuario asignado puede ver el detalle de su asignación
+        if ($asignacion->asignado_a != auth()->user()->id_usuario) {
+            abort(403, 'No autorizado');
+        }
+
+        $asignacion->load([
+            'activo.categoria',
+            'activo.registrador',
+            'activo.aprobador',
+            'usuarioAsignador',
+            'usuarioAsignado',
+        ]);
+
+        return view('asignaciones.detalle', compact('asignacion'));
+    }
+
     public function aceptar(AsignacionActivo $asignacion)
     {
         // Actualizar posibles vencimientos antes de procesar la respuesta
@@ -375,7 +415,9 @@ class AsignacionActivoController extends Controller
             ]);
         });
 
-        return back()->with('ok', 'Asignación aceptada correctamente.');
+        return redirect()
+            ->route('activos.mis')
+            ->with('ok', 'Asignación aceptada correctamente.');
     }
 
     public function rechazar(AsignacionActivo $asignacion)
@@ -412,7 +454,9 @@ class AsignacionActivoController extends Controller
             ]);
         });
 
-        return back()->with('ok', 'Asignación rechazada. El activo queda disponible para nueva asignación.');
+        return redirect()
+            ->route('asignaciones.mis')
+            ->with('ok', 'Asignación rechazada. El activo queda disponible para nueva asignación.');
     }
 
     /**

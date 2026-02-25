@@ -44,6 +44,20 @@
         font-size: 0.85em;
         padding: 0.4em 0.8em;
     }
+
+    .btn-detalle {
+        background-color: transparent;
+        color: var(--rojo-principal);
+        border: 1px solid var(--rojo-principal);
+        transition: all 0.3s ease;
+    }
+
+    .btn-detalle:hover {
+        background-color: var(--rojo-principal);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(126, 0, 1, 0.18);
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -70,11 +84,11 @@
                 <label class="form-label text-muted fw-bold mb-1">Estado</label>
                 <select name="estado_asignacion" class="form-select">
                     <option value="">Todos</option>
-                    <option value="PENDIENTE" @selected(($filtros['estado_asignacion'] ?? '' )==='PENDIENTE')>PENDIENTE</option>
-                    <option value="ACEPTADO" @selected(($filtros['estado_asignacion'] ?? '' )==='ACEPTADO')>ACEPTADO</option>
-                    <option value="RECHAZADO" @selected(($filtros['estado_asignacion'] ?? '' )==='RECHAZADO')>RECHAZADO</option>
-                    <option value="DEVOLUCION" @selected(($filtros['estado_asignacion'] ?? '' )==='DEVOLUCION')>DEVOLUCIÓN (pendiente)</option>
-                    <option value="CARGADO" @selected(($filtros['estado_asignacion'] ?? '' )==='CARGADO')>DEVUELTO</option>
+                    <option value="PENDIENTE" @selected(($filtros['estado_asignacion'] ?? '' )==='PENDIENTE' )>PENDIENTE</option>
+                    <option value="ACEPTADO" @selected(($filtros['estado_asignacion'] ?? '' )==='ACEPTADO' )>ACEPTADO</option>
+                    <option value="RECHAZADO" @selected(($filtros['estado_asignacion'] ?? '' )==='RECHAZADO' )>RECHAZADO</option>
+                    <option value="DEVOLUCION" @selected(($filtros['estado_asignacion'] ?? '' )==='DEVOLUCION' )>DEVOLUCIÓN (pendiente)</option>
+                    <option value="CARGADO" @selected(($filtros['estado_asignacion'] ?? '' )==='CARGADO' )>DEVUELTO</option>
                 </select>
             </div>
 
@@ -182,6 +196,10 @@
 
                 <td class="text-center">
                     <div class="d-flex justify-content-center gap-1">
+                        <a href="{{ route('asignaciones.detalle-admin', $a) }}" class="btn btn-sm btn-detalle" title="Ver detalle del activo">
+                            <i class="fa-solid fa-eye"></i>
+                        </a>
+
                         @if($a->estado_asignacion === 'DEVOLUCION')
                         <form method="POST" action="{{ route('asignaciones.devolucion.aceptar', $a) }}" class="m-0">
                             @csrf
@@ -208,7 +226,7 @@
                         @endif
 
                         @if($a->estado_asignacion === 'CARGADO' || (int)$a->estado === 0)
-                        <span class="text-muted">-</span>
+                        <span class="text-muted d-none">-</span>
                         @endif
                     </div>
                 </td>

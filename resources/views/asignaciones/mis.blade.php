@@ -65,6 +65,20 @@
         box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
     }
 
+    .btn-detalle {
+        background-color: transparent;
+        color: var(--rojo-principal);
+        border: 1px solid var(--rojo-principal);
+        transition: all 0.3s ease;
+    }
+
+    .btn-detalle:hover {
+        background-color: var(--rojo-principal);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(126, 0, 1, 0.18);
+    }
+
     /* Estilo para Fila Pendiente */
     .fila-pendiente {
         background-color: rgba(237, 189, 63, 0.03);
@@ -118,7 +132,7 @@
             <div class="col-md-4">
                 <label class="form-label text-muted fw-bold mb-1">Estado de Asignación</label>
                 <select name="estado_asignacion" class="form-select">
-                    <option value="" @selected(($filtros['estado_asignacion'] ?? 'PENDIENTE')==='')>Todos los estados</option>
+                    <option value="" @selected(($filtros['estado_asignacion'] ?? 'PENDIENTE' )==='' )>Todos los estados</option>
                     @foreach(['PENDIENTE', 'ACEPTADO', 'RECHAZADO', 'DEVOLUCION', 'BAJA'] as $estado)
                     <option value="{{ $estado }}" @selected(($filtros['estado_asignacion'] ?? 'PENDIENTE' )===$estado)>{{ $estado }}</option>
                     @endforeach
@@ -214,16 +228,20 @@
                 <td class="text-center pe-4">
                     @if($a->estado_asignacion === 'PENDIENTE')
                     <div class="d-flex justify-content-center gap-2">
+                        <a href="{{ route('asignaciones.detalle', $a) }}" class="btn btn-sm btn-detalle fw-bold" title="Ver detalle">
+                            <i class="fa-solid fa-eye"></i>
+                        </a>
+
                         <form method="POST" action="{{ route('asignaciones.aceptar', $a) }}" class="m-0">
                             @csrf
-                            <button type="button" class="btn btn-sm btn-aceptar fw-bold swal-aceptar" data-message="¿Confirmas que has recibido y aceptas la responsabilidad de este activo?">
+                            <button type="button" class="btn btn-sm btn-aceptar fw-bold swal-aceptar" title="Aceptar" data-message="¿Confirmas que has recibido y aceptas la responsabilidad de este activo?">
                                 <i class="fa-solid fa-check"></i>
                             </button>
                         </form>
 
                         <form method="POST" action="{{ route('asignaciones.rechazar', $a) }}" class="m-0">
                             @csrf
-                            <button type="button" class="btn btn-sm btn-rechazar fw-bold swal-rechazar" data-message="¿Estás seguro de rechazar esta asignación?">
+                            <button type="button" class="btn btn-sm btn-rechazar fw-bold swal-rechazar" title="Rechazar" data-message="¿Estás seguro de rechazar esta asignación?">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                         </form>

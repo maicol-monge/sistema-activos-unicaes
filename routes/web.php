@@ -61,6 +61,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/mis-activos', [AsignacionActivoController::class, 'misActivos'])->name('activos.mis');
         Route::get('/mis-asignaciones', [AsignacionActivoController::class, 'misAsignaciones'])
             ->name('asignaciones.mis');
+
+        Route::get('/asignaciones/{asignacion}/detalle', [AsignacionActivoController::class, 'detalle'])
+            ->name('asignaciones.detalle');
         Route::get('/mis-reportes-activos', [ReporteActivoController::class, 'misReportes'])
             ->name('encargado.reportes.index');
         Route::get('/mis-reportes-activos/crear', [ReporteActivoController::class, 'createEncargado'])
@@ -112,6 +115,9 @@ Route::middleware('auth')->group(function () {
         // Solo ADMIN ve listado completo de asignaciones y gestiona bajas
         Route::get('/asignaciones', [AsignacionActivoController::class, 'index'])
             ->name('asignaciones.index');
+
+        Route::get('/asignaciones/{asignacion}/detalle-admin', [AsignacionActivoController::class, 'detalleAdmin'])
+            ->name('asignaciones.detalle-admin');
 
         // ADMIN gestiona devoluciones de activos
         Route::post('/asignaciones/{asignacion}/devolucion/aceptar', [AsignacionActivoController::class, 'aceptarDevolucion'])
