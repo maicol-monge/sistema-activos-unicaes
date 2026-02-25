@@ -6,6 +6,7 @@ use App\Models\AsignacionActivo;
 use App\Models\User;
 use App\Models\Activo;
 use App\Models\MovimientoActivo;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -141,6 +142,25 @@ class AsignacionActivoController extends Controller
         return view('asignaciones.index', compact('asignaciones', 'filtros'));
     }
 
+    public function detalleAdmin(AsignacionActivo $asignacion)
+    {
+        $usuario = auth()->user();
+
+        if (!$usuario || $usuario->rol !== 'ADMIN') {
+            abort(403, 'No autorizado');
+        }
+
+        $asignacion->load([
+            'activo.categoria',
+            'activo.registrador',
+            'activo.aprobador',
+            'usuarioAsignador',
+            'usuarioAsignado',
+        ]);
+
+        return view('asignaciones.detalle-admin', compact('asignacion'));
+    }
+
     public function create()
     {
         $usuario = auth()->user();
@@ -197,7 +217,7 @@ class AsignacionActivoController extends Controller
 
         if (!$u || !in_array($u->rol, ['ENCARGADO', 'DECANO', 'INVENTARIADOR', 'ADMIN']) || (int)$u->estado !== 1) {
             return back()
-            ->with('err', 'Debe seleccionar un usuario activo con rol ENCARGADO, DECANO, INVENTARIADOR o ADMIN.')
+                ->with('err', 'Debe seleccionar un usuario activo con rol ENCARGADO, DECANO, INVENTARIADOR o ADMIN.')
                 ->withInput();
         }
 
@@ -331,6 +351,96 @@ class AsignacionActivoController extends Controller
         return view('asignaciones.mis', compact('asignaciones', 'filtros'));
     }
 
+    public function detalle(AsignacionActivo $asignacion)
+    {
+        // Actualizar estados de asignaciones vencidas antes de mostrar el detalle
+        $this->rechazarAsignacionesVencidas();
+
+        // ✅ Solo el usuario asignado puede ver el detalle de su asignación
+        if ($asignacion->asignado_a != auth()->user()->id_usuario) {
+            abort(403, 'No autorizado');
+        }
+
+        $asignacion->load([
+            'activo.categoria',
+            'activo.registrador',
+            'activo.aprobador',
+            'usuarioAsignador',
+            'usuarioAsignado',
+        ]);
+
+        return view('asignaciones.detalle', compact('asignacion'));
+    }
+
+    public function comprobante(AsignacionActivo $asignacion)
+    {
+        // ✅ Solo el usuario asignado puede ver el comprobante
+        if ($asignacion->asignado_a != auth()->user()->id_usuario) {
+            abort(403, 'No autorizado');
+        }
+
+        $asignacion->load([
+            'activo.categoria',
+            'usuarioAsignador',
+            'usuarioAsignado',
+        ]);
+
+        // La fecha de aceptación real se toma del movimiento. Nota: `movimientos_activos.fecha`
+        // es tipo DATE (sin hora), por eso usamos `created_at` para mostrar fecha+hora.
+        $id = (int) $asignacion->id_asignacion;
+        $fechaAceptacion = MovimientoActivo::where('id_activo', $asignacion->id_activo)
+            ->where('tipo', 'ASIGNACION')
+            ->where('observaciones', 'like', "%ID asignación: {$id}%")
+            ->where('observaciones', 'like', '%ACEPTADA%')
+            ->orderByDesc('created_at')
+            ->value('created_at');
+
+        $numero = 'COMP-' . str_pad((string) $asignacion->id_asignacion, 6, '0', STR_PAD_LEFT);
+        $fileName = "{$numero}.pdf";
+
+        $pdf = Pdf::loadView('asignaciones.comprobante-pdf', [
+            'asignacion' => $asignacion,
+            'fechaAceptacion' => $fechaAceptacion,
+            'numero' => $numero,
+        ])->setPaper('letter');
+
+        return $pdf->download($fileName);
+    }
+
+    public function comprobantePreview(AsignacionActivo $asignacion)
+    {
+        // ✅ Solo el usuario asignado puede ver el comprobante
+        if ($asignacion->asignado_a != auth()->user()->id_usuario) {
+            abort(403, 'No autorizado');
+        }
+
+        $asignacion->load([
+            'activo.categoria',
+            'usuarioAsignador',
+            'usuarioAsignado',
+        ]);
+
+        $id = (int) $asignacion->id_asignacion;
+        $fechaAceptacion = MovimientoActivo::where('id_activo', $asignacion->id_activo)
+            ->where('tipo', 'ASIGNACION')
+            ->where('observaciones', 'like', "%ID asignación: {$id}%")
+            ->where('observaciones', 'like', '%ACEPTADA%')
+            ->orderByDesc('created_at')
+            ->value('created_at');
+
+        $numero = 'COMP-' . str_pad((string) $asignacion->id_asignacion, 6, '0', STR_PAD_LEFT);
+        $fileName = "{$numero}.pdf";
+
+        $pdf = Pdf::loadView('asignaciones.comprobante-pdf', [
+            'asignacion' => $asignacion,
+            'fechaAceptacion' => $fechaAceptacion,
+            'numero' => $numero,
+        ])->setPaper('letter');
+
+        // `stream` sirve el PDF en el navegador (Content-Disposition: inline), ideal para iframe/modal.
+        return $pdf->stream($fileName);
+    }
+
     public function aceptar(AsignacionActivo $asignacion)
     {
         // Actualizar posibles vencimientos antes de procesar la respuesta
@@ -375,7 +485,9 @@ class AsignacionActivoController extends Controller
             ]);
         });
 
-        return back()->with('ok', 'Asignación aceptada correctamente.');
+        return redirect()
+            ->route('activos.mis')
+            ->with('ok', 'Asignación aceptada correctamente.');
     }
 
     public function rechazar(AsignacionActivo $asignacion)
@@ -412,7 +524,9 @@ class AsignacionActivoController extends Controller
             ]);
         });
 
-        return back()->with('ok', 'Asignación rechazada. El activo queda disponible para nueva asignación.');
+        return redirect()
+            ->route('asignaciones.mis')
+            ->with('ok', 'Asignación rechazada. El activo queda disponible para nueva asignación.');
     }
 
     /**
