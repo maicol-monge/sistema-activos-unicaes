@@ -17,6 +17,7 @@ class AsignacionActivo extends Model
         'fecha_asignacion',
         'fecha_respuesta',
         'estado',
+        'motivo_devolucion',
     ];
 
     public function activo()

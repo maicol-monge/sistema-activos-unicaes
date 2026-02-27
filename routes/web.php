@@ -49,6 +49,10 @@ Route::middleware('auth')->group(function () {
             ->name('activos.baja-directa');
         Route::get('/activos/{activo}/historial', [ActivoController::class, 'historial'])
             ->name('activos.historial');
+        Route::get('/activos/{activo}/historial/pdf', [ActivoController::class, 'descargarHistorialPdf'])
+            ->name('activos.historial.pdf');
+        Route::get('/activos/{activo}/historial/pdf/preview', [ActivoController::class, 'previsualizarHistorialPdf'])
+            ->name('activos.historial.pdf.preview');
     });
 
     Route::middleware('role:INVENTARIADOR')->group(function () {
