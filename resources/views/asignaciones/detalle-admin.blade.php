@@ -160,6 +160,22 @@ $fechaDevolucion = \Carbon\Carbon::parse($a->fecha_respuesta)->format('d/m/Y H:i
                         <div class="kv-label">Estado de asignación</div>
                         <div class="kv-value">{{ $a->estado_asignacion ?? '—' }}</div>
                     </div>
+                    @if($a->motivo_devolucion)
+                        <div class="col-12">
+                            <div class="kv-label">
+                                <i class="fa-solid fa-comment-dots me-1" style="color: var(--dorado);"></i>
+                                Motivo de devolución
+                            </div>
+                            <div class="p-3 rounded-2 mt-1"
+                                style="background-color: #fff8e1;
+                                        border-left: 4px solid var(--dorado);
+                                        font-size: 0.92rem;
+                                        color: #5a4a00;
+                                        line-height: 1.5;">
+                                {{ $a->motivo_devolucion }}
+                            </div>
+                        </div>
+                    @endif
 
                     <div class="col-12">
                         <div class="kv-label">Fecha de asignación</div>
