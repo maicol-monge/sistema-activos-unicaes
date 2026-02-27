@@ -58,6 +58,12 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(126, 0, 1, 0.18);
     }
+
+    /* Scroll en la tabla (sin paginación) */
+    .table-scroll {
+        max-height: 60vh;
+        overflow: auto;
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -114,7 +120,7 @@
     </div>
 </div>
 
-<div class="table-responsive bg-white rounded-3 shadow-sm border overflow-hidden">
+<div class="table-responsive table-scroll bg-white rounded-3 shadow-sm border">
     <table class="table table-custom table-hover mb-0">
         <thead>
             <tr>
@@ -241,10 +247,6 @@
             @endforelse
         </tbody>
     </table>
-</div>
-
-<div class="d-flex justify-content-end mt-4">
-    {{ $asignaciones->links() }}
 </div>
 
 @endsection
