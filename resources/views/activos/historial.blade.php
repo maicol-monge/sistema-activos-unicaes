@@ -92,6 +92,9 @@
             <p class="text-muted mb-0">No hay asignaciones registradas para este activo.</p>
         @else
             <div class="table-responsive">
+                @php
+                    $tieneMotivos = $asignaciones->contains(fn($a) => !empty($a->motivo_devolucion));
+                @endphp
                 <table class="table table-sm align-middle mb-0">
                     <thead class="table-light">
                         <tr>
@@ -100,6 +103,9 @@
                             <th>Asignado por</th>
                             <th>Estado de asignación</th>
                             <th>Fecha de respuesta</th>
+                            @if($tieneMotivos)
+                                <th>Motivo devolución</th>
+                            @endif
                             <th>Activo</th>
                         </tr>
                     </thead>
@@ -117,6 +123,21 @@
                                         -
                                     @endif
                                 </td>
+                                @if($tieneMotivos)
+                                    <td>
+                                        @if($asignacion->motivo_devolucion)
+                                            <span class="badge text-wrap text-start fw-normal"
+                                                style="background-color: #fff3cd; color: #856404;
+                                                        border: 1px solid #ffc107; max-width: 220px;
+                                                        white-space: normal; line-height: 1.4;">
+                                                <i class="fa-solid fa-comment-dots me-1"></i>
+                                                {{ $asignacion->motivo_devolucion }}
+                                            </span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                @endif
                                 <td>{{ $asignacion->estado ? 'Sí' : 'No' }}</td>
                             </tr>
                         @endforeach

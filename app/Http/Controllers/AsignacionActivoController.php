@@ -596,8 +596,11 @@ class AsignacionActivoController extends Controller
         return back()->with('ok', 'Devolución rechazada. El activo continúa asignado al usuario.');
     }
 
-    public function devolver(AsignacionActivo $asignacion)
+    public function devolver(Request $request, AsignacionActivo $asignacion)
     {
+        $request->validate([
+            'motivo_devolucion' => 'required|string|min:10|max:500',
+        ]);
         if ($asignacion->asignado_a != auth()->user()->id_usuario) {
             abort(403, 'No autorizado');
         }
@@ -606,9 +609,10 @@ class AsignacionActivoController extends Controller
             return back()->with('err', 'Solo pueden devolverse asignaciones aceptadas activas.');
         }
 
-        DB::transaction(function () use ($asignacion) {
+        DB::transaction(function () use ($request, $asignacion) {
             // Marcar la asignación como DEVOLUCION (pendiente de revisión por ADMIN)
             $asignacion->estado_asignacion = 'DEVOLUCION';
+            $asignacion->motivo_devolucion = $request->motivo_devolucion;
             // Se mantiene estado = 1 hasta que el ADMIN acepte o rechace la devolución
             $asignacion->save();
 

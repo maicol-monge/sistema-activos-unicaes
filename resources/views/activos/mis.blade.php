@@ -174,10 +174,11 @@
                             data-download-url="{{ route('asignaciones.comprobante', $a) }}">
                             <i class="fa-solid fa-receipt"></i>
                         </button>
-
-                        <form method="POST" action="{{ route('asignaciones.devolver', $a) }}" class="m-0">
+                        <form method="POST" action="{{ route('asignaciones.devolver', $a) }}" class="m-0 form-devolver">
                             @csrf
-                            <button type="button" class="btn btn-sm btn-devolver fw-bold swal-devolver" data-message="¿Confirmas la devolución de este activo? Esta acción cerrará tu asignación activa." title="Devolver">
+                            {{-- Input hidden donde el script depositará el motivo --}}
+                            <input type="hidden" name="motivo_devolucion" class="input-motivo" value="">
+                            <button type="button" class="btn btn-sm btn-devolver fw-bold swal-devolver" title="Devolver">
                                 <i class="fa-solid fa-rotate-left"></i>
                             </button>
                         </form>
@@ -232,6 +233,24 @@
 
 @push('scripts')
 <script>
+    // Mensajes de sesión del controlador → SweetAlert2
+    @if(session('ok'))
+        Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: '{{ session('ok') }}',
+            confirmButtonColor: '#0d6efd'
+        });
+    @endif
+
+    @if(session('err'))
+        Swal.fire({
+            icon: 'error',
+            title: 'No permitido',
+            text: '{{ session('err') }}',
+            confirmButtonColor: '#dc3545'
+        });
+    @endif
     document.addEventListener('DOMContentLoaded', () => {
         const modalEl = document.getElementById('comprobantePreviewModal');
         const iframeEl = document.getElementById('comprobantePreviewFrame');
@@ -259,22 +278,80 @@
         }
 
         document.querySelectorAll('.swal-devolver').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const form = btn.closest('form');
-                const message = btn.getAttribute('data-message') || '¿Deseas devolver este activo?';
+            btn.addEventListener('click', function () {
+                const form        = btn.closest('form');
+                const inputMotivo = form.querySelector('.input-motivo');
 
                 Swal.fire({
                     title: 'Devolver activo',
-                    text: message,
+                    html: `
+                        <p class="text-muted mb-3" style="font-size:0.95rem;">
+                            Por favor, indica el motivo de la devolución.
+                        </p>
+                        <textarea
+                            id="swal-motivo"
+                            class="swal2-textarea"
+                            placeholder="Escribe el motivo aquí... (mínimo 10 caracteres)"
+                            rows="4"
+                            maxlength="500"
+                            style="width:80%; resize:vertical; font-size:0.9rem;"></textarea>
+                        <div id="swal-motivo-error"
+                            class="text-danger mt-1"
+                            style="font-size:0.82rem; display:none;">
+                            El motivo es obligatorio y debe tener al menos 10 caracteres.
+                        </div>
+                        <div class="text-end text-muted mt-1"
+                            style="font-size:0.78rem;">
+                            <span id="swal-char-count">0</span>/500
+                        </div>
+                    `,
                     icon: 'question',
                     showCancelButton: true,
-                    confirmButtonText: 'Sí, devolver',
+                    confirmButtonText: '<i class="fa-solid fa-rotate-left me-1"></i> Confirmar devolución',
                     cancelButtonText: 'Cancelar',
                     confirmButtonColor: '#0d6efd',
-                    cancelButtonColor: '#6c757d'
+                    cancelButtonColor: '#6c757d',
+                    focusConfirm: false,
+
+                    didOpen: () => {
+                        const textarea = document.getElementById('swal-motivo');
+                        const counter  = document.getElementById('swal-char-count');
+                        const errorEl  = document.getElementById('swal-motivo-error');
+
+                        textarea.addEventListener('input', () => {
+                            counter.textContent = textarea.value.length;
+                            if (textarea.value.trim().length >= 10) {
+                                errorEl.style.display  = 'none';
+                                textarea.style.borderColor = '';
+                            }
+                        });
+                    },
+
+                    preConfirm: () => {
+                        const textarea = document.getElementById('swal-motivo');
+                        const motivo   = textarea.value.trim();
+                        const errorEl  = document.getElementById('swal-motivo-error');
+
+                        if (motivo.length < 10) {
+                            errorEl.style.display      = 'block';
+                            textarea.style.borderColor = '#dc3545';
+                            return false;
+                        }
+                        return motivo;
+                    }
+
                 }).then((result) => {
-                    if (result.isConfirmed && form) {
+                    // Cancelado — no hace nada
+                    if (result.isDismissed) return;
+
+                    // Confirmado con motivo válido
+                    if (result.isConfirmed && result.value) {
+                        inputMotivo.value = result.value;
+
+                        // Debug: verifica que el motivo se asignó antes de enviar
+                        console.log('Motivo asignado:', inputMotivo.value);
+                        console.log('Action del form:', form.action);
+
                         form.submit();
                     }
                 });
