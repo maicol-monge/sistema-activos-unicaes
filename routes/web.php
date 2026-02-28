@@ -24,10 +24,10 @@ Route::post('/login', [AuthController::class, 'login'])
 
 Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout')
-    ->middleware('auth');
+    ->middleware(['auth', 'preventBack']);
 
 // Rutas protegidas
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'preventBack'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
