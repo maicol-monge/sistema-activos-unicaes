@@ -36,6 +36,12 @@
     .table-custom tbody tr:hover {
         background-color: #fdfaf3;
     }
+
+    /* Scroll en la tabla */
+    .table-scroll {
+        max-height: 60vh;
+        overflow: auto;
+    }
 </style>
 
 @php $rol = auth()->user()->rol ?? null; @endphp
@@ -97,9 +103,9 @@
                 <label class="form-label text-muted fw-bold mb-1">Condición</label>
                 <select name="condicion" class="form-select">
                     <option value="">Todas</option>
-                    <option value="BUENO" @selected(($filtros['condicion'] ?? '' )==='BUENO')>BUENO</option>
-                    <option value="DANIADO" @selected(($filtros['condicion'] ?? '' )==='DANIADO')>DAÑADO</option>
-                    <option value="REGULAR" @selected(($filtros['condicion'] ?? '' )==='REGULAR')>REGULAR</option>
+                    <option value="BUENO" @selected(($filtros['condicion'] ?? '' )==='BUENO' )>BUENO</option>
+                    <option value="DANIADO" @selected(($filtros['condicion'] ?? '' )==='DANIADO' )>DAÑADO</option>
+                    <option value="REGULAR" @selected(($filtros['condicion'] ?? '' )==='REGULAR' )>REGULAR</option>
                 </select>
             </div>
 
@@ -127,7 +133,7 @@
     </div>
 </div>
 
-<div class="table-responsive bg-white rounded-3 shadow-sm border overflow-hidden">
+<div class="table-responsive table-scroll bg-white rounded-3 shadow-sm border">
     <table class="table table-custom table-hover mb-0">
         <thead>
             <tr>
@@ -167,20 +173,20 @@
                 </td>
                 <td class="text-center pe-4">
                     @php
-                        $usuario = auth()->user();
-                        $puedeEditar = false;
-                        $puedeDarBaja = false;
+                    $usuario = auth()->user();
+                    $puedeEditar = false;
+                    $puedeDarBaja = false;
 
-                        if ($usuario->rol === 'ADMIN') {
-                            $puedeEditar = true; // ADMIN puede editar cualquier activo
-                            $puedeDarBaja = $activo->estado === 'APROBADO';
-                        }
+                    if ($usuario->rol === 'ADMIN') {
+                    $puedeEditar = true; // ADMIN puede editar cualquier activo
+                    $puedeDarBaja = $activo->estado === 'APROBADO';
+                    }
 
-                        if ($usuario->rol === 'INVENTARIADOR'
-                            && $activo->registrado_por == $usuario->id_usuario
-                            && $activo->estado === 'PENDIENTE') {
-                            $puedeEditar = true;
-                        }
+                    if ($usuario->rol === 'INVENTARIADOR'
+                    && $activo->registrado_por == $usuario->id_usuario
+                    && $activo->estado === 'PENDIENTE') {
+                    $puedeEditar = true;
+                    }
                     @endphp
 
                     <div class="d-inline-flex gap-1 justify-content-center">
@@ -201,8 +207,7 @@
                             type="button"
                             class="btn btn-sm btn-danger btn-baja-directa"
                             data-id="{{ $activo->id_activo }}"
-                            title="Dar de baja"
-                        >
+                            title="Dar de baja">
                             <i class="fa-solid fa-arrow-down-long"></i>
                         </button>
 
@@ -213,7 +218,7 @@
                         @endif
 
                         @if(!$puedeEditar && !$puedeDarBaja)
-                            <span class="text-muted">-</span>
+                        <span class="text-muted">-</span>
                         @endif
                     </div>
                 </td>
@@ -247,7 +252,9 @@
             const form = document.getElementById(`form-baja-${id}`);
             if (!form) return;
 
-            const { value: motivo } = await Swal.fire({
+            const {
+                value: motivo
+            } = await Swal.fire({
                 title: 'Dar de baja activo',
                 text: 'Esta acción marcará el activo como BAJA.',
                 input: 'textarea',

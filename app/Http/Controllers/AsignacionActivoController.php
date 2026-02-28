@@ -136,8 +136,7 @@ class AsignacionActivoController extends Controller
             ->when(!empty($filtros['fecha_desde']), fn($query) => $query->whereDate('fecha_asignacion', '>=', $filtros['fecha_desde']))
             ->when(!empty($filtros['fecha_hasta']), fn($query) => $query->whereDate('fecha_asignacion', '<=', $filtros['fecha_hasta']))
             ->orderBy('id_asignacion', 'desc')
-            ->paginate(10)
-            ->withQueryString();
+            ->get();
 
         return view('asignaciones.index', compact('asignaciones', 'filtros'));
     }
