@@ -13,9 +13,23 @@
     <h2 class="mb-0" style="color: var(--rojo-principal); font-weight: 700;">
         <i class="fa-solid fa-clock-rotate-left me-2"></i> Historial del Activo
     </h2>
-    <a href="{{ route('activos.index') }}" class="btn btn-light border">
-        <i class="fa-solid fa-arrow-left-long me-1"></i> Volver a Activos
-    </a>
+    <div class="d-flex gap-2">
+
+        {{-- Botón que abre el modal de previsualización --}}
+        <button type="button"
+                class="btn btn-light"
+                style="color: var(--rojo-principal); font-weight: 700;"
+                data-bs-toggle="modal"
+                data-bs-target="#modalPdfPreview"
+                data-preview-url="{{ route('activos.historial.pdf.preview', $activo) }}"
+                data-download-url="{{ route('activos.historial.pdf', $activo) }}">
+            <i class="fa-solid fa-file-pdf me-1"></i> Ver / Descargar PDF
+        </button>
+
+        <a href="{{ route('activos.index') }}" class="btn btn-light border">
+            <i class="fa-solid fa-arrow-left-long me-1"></i> Volver a Activos
+        </a>
+    </div>
 </div>
 
 <div class="row g-4 mb-4">
@@ -78,6 +92,9 @@
             <p class="text-muted mb-0">No hay asignaciones registradas para este activo.</p>
         @else
             <div class="table-responsive">
+                @php
+                    $tieneMotivos = $asignaciones->contains(fn($a) => !empty($a->motivo_devolucion));
+                @endphp
                 <table class="table table-sm align-middle mb-0">
                     <thead class="table-light">
                         <tr>
@@ -86,6 +103,9 @@
                             <th>Asignado por</th>
                             <th>Estado de asignación</th>
                             <th>Fecha de respuesta</th>
+                            @if($tieneMotivos)
+                                <th>Motivo devolución</th>
+                            @endif
                             <th>Activo</th>
                         </tr>
                     </thead>
@@ -103,6 +123,21 @@
                                         -
                                     @endif
                                 </td>
+                                @if($tieneMotivos)
+                                    <td>
+                                        @if($asignacion->motivo_devolucion)
+                                            <span class="badge text-wrap text-start fw-normal"
+                                                style="background-color: #fff3cd; color: #856404;
+                                                        border: 1px solid #ffc107; max-width: 220px;
+                                                        white-space: normal; line-height: 1.4;">
+                                                <i class="fa-solid fa-comment-dots me-1"></i>
+                                                {{ $asignacion->motivo_devolucion }}
+                                            </span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                @endif
                                 <td>{{ $asignacion->estado ? 'Sí' : 'No' }}</td>
                             </tr>
                         @endforeach
@@ -147,5 +182,107 @@
         @endif
     </div>
 </div>
+{{-- ======================== MODAL PREVISUALIZACIÓN PDF ======================== --}}
+<div class="modal fade" id="modalPdfPreview" tabindex="-1"
+     aria-labelledby="modalPdfPreviewLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 10px; overflow: hidden;">
+
+            {{-- Header --}}
+            <div class="modal-header text-white"
+                 style="background-color: var(--rojo-principal);">
+                <h5 class="modal-title fw-bold" id="modalPdfPreviewLabel">
+                    <i class="fa-solid fa-file-pdf me-2"></i>
+                    Vista previa — Historial del Activo
+                    <span class="fw-normal opacity-75 ms-1">({{ $activo->codigo }})</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white"
+                        data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            {{-- Body con iframe --}}
+            <div class="modal-body p-0 position-relative">
+
+                {{-- Spinner mientras carga el PDF --}}
+                <div id="pdfLoadingSpinner"
+                     class="position-absolute top-50 start-50 translate-middle text-center"
+                     style="z-index: 10;">
+                    <div class="spinner-border mb-2"
+                         style="color: var(--rojo-principal); width: 3rem; height: 3rem;"
+                         role="status"></div>
+                    <p class="text-muted small">Cargando vista previa...</p>
+                </div>
+
+                {{-- iframe del PDF --}}
+                <iframe id="pdfPreviewFrame"
+                        src=""
+                        style="width: 100%; height: 80vh; border: none; opacity: 0; transition: opacity 0.3s ease;"
+                        title="Vista previa PDF">
+                </iframe>
+            </div>
+
+            {{-- Footer con botón de descarga --}}
+            <div class="modal-footer"
+                 style="background-color: #f8f9fa; border-top: 2px solid var(--rojo-principal);">
+                <span class="text-muted small me-auto">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    Revisa el reporte antes de descargarlo.
+                </span>
+                <button type="button" class="btn btn-light border"
+                        data-bs-dismiss="modal">
+                    <i class="fa-solid fa-xmark me-1"></i> Cerrar
+                </button>
+                <a id="btnDescargarPdf"
+                   href="{{ route('activos.historial.pdf', $activo) }}"
+                   class="btn btn-danger fw-bold">
+                    <i class="fa-solid fa-download me-1"></i> Descargar PDF
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{{-- ======================== SCRIPT DEL MODAL ======================== --}}
+@push('scripts')
+<script>
+    const modalEl = document.getElementById('modalPdfPreview');
+
+    modalEl.addEventListener('show.bs.modal', function (event) {
+        const button       = event.relatedTarget;
+        const previewUrl   = button.getAttribute('data-preview-url');
+        const downloadUrl  = button.getAttribute('data-download-url');
+
+        const iframe  = document.getElementById('pdfPreviewFrame');
+        const spinner = document.getElementById('pdfLoadingSpinner');
+        const btnDesc = document.getElementById('btnDescargarPdf');
+
+        // Resetear estado
+        iframe.style.opacity = '0';
+        spinner.style.display = 'block';
+        iframe.src = '';
+
+        // Actualizar URL de descarga
+        btnDesc.href = downloadUrl;
+
+        // Cargar PDF en el iframe
+        iframe.src = previewUrl;
+
+        // Mostrar iframe cuando termine de cargar
+        iframe.onload = function () {
+            spinner.style.display = 'none';
+            iframe.style.opacity  = '1';
+        };
+    });
+
+    // Limpiar iframe al cerrar para liberar memoria
+    modalEl.addEventListener('hidden.bs.modal', function () {
+        const iframe = document.getElementById('pdfPreviewFrame');
+        iframe.src   = '';
+        iframe.style.opacity = '0';
+        document.getElementById('pdfLoadingSpinner').style.display = 'block';
+    });
+</script>
+@endpush
 
 @endsection

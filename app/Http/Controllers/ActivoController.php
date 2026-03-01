@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ActivoController extends Controller
 {
@@ -562,5 +563,68 @@ class ActivoController extends Controller
             ->get();
 
         return view('activos.historial', compact('activo', 'asignacionActual', 'asignaciones', 'movimientos'));
+    }
+
+    // PDF del historial de movimientos del activo
+    public function descargarHistorialPdf(Activo $activo)
+    {
+        $activo->load(['categoria', 'registrador', 'aprobador']);
+
+        $asignaciones = $activo->asignaciones()
+            ->with(['usuarioAsignado', 'usuarioAsignador'])
+            ->orderByDesc('fecha_asignacion')
+            ->orderByDesc('id_asignacion')
+            ->get();
+
+        $asignacionActual = $activo->asignaciones()
+            ->with(['usuarioAsignado'])
+            ->where('estado', 1)
+            ->whereIn('estado_asignacion', ['ACEPTADO', 'DEVOLUCION'])
+            ->orderByDesc('fecha_asignacion')
+            ->orderByDesc('id_asignacion')
+            ->first();
+
+        $movimientos = $activo->movimientos()
+            ->with('usuario')
+            ->orderByDesc('fecha')
+            ->orderByDesc('id_movimiento')
+            ->get();
+
+        $pdf = Pdf::loadView('activos.historial_pdf', compact(
+            'activo', 'asignaciones', 'asignacionActual', 'movimientos'
+        ))->setPaper('letter', 'portrait');
+
+        return $pdf->download("historial_activo_{$activo->codigo}.pdf");
+    }
+    public function previsualizarHistorialPdf(Activo $activo)
+    {
+        $activo->load(['categoria', 'registrador', 'aprobador']);
+
+        $asignaciones = $activo->asignaciones()
+            ->with(['usuarioAsignado', 'usuarioAsignador'])
+            ->orderByDesc('fecha_asignacion')
+            ->orderByDesc('id_asignacion')
+            ->get();
+
+        $asignacionActual = $activo->asignaciones()
+            ->with(['usuarioAsignado'])
+            ->where('estado', 1)
+            ->whereIn('estado_asignacion', ['ACEPTADO', 'DEVOLUCION'])
+            ->orderByDesc('fecha_asignacion')
+            ->orderByDesc('id_asignacion')
+            ->first();
+
+        $movimientos = $activo->movimientos()
+            ->with('usuario')
+            ->orderByDesc('fecha')
+            ->orderByDesc('id_movimiento')
+            ->get();
+
+        $pdf = Pdf::loadView('activos.historial_pdf', compact(
+            'activo', 'asignaciones', 'asignacionActual', 'movimientos'
+        ))->setPaper('letter', 'portrait');
+
+        // stream() muestra el PDF en el navegador en lugar de descargarlo
+        return $pdf->stream("historial_activo_{$activo->codigo}.pdf");
     }
 }
