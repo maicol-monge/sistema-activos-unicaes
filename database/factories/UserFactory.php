@@ -23,11 +23,15 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $rol = fake()->randomElement(['ADMIN', 'INVENTARIADOR', 'DECANO', 'ENCARGADO']);
+
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
+            'nombre' => fake()->name(),
+            'correo' => fake()->unique()->safeEmail(),
+            'contrasena' => static::$password ??= Hash::make('password'),
+            'rol' => $rol,
+            'tipo' => $rol === 'ADMIN' ? null : fake()->randomElement(['PERSONA', 'UNIDAD']),
+            'estado' => fake()->boolean(90),
             'remember_token' => Str::random(10),
         ];
     }
@@ -37,8 +41,6 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
+        return $this;
     }
 }
