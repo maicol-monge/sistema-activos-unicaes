@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class MovimientoActivo extends Model
 {
+    use HasFactory;
+
     protected $table = 'movimientos_activos';
     protected $primaryKey = 'id_movimiento';
 
