@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AsignacionActivo extends Model
 {
+    use HasFactory;
+
     protected $table = 'asignaciones_activos';
     protected $primaryKey = 'id_asignacion';
 

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class BajaActivo extends Model
 {
+    use HasFactory;
+
     protected $table = 'bajas_activos';
     protected $primaryKey = 'id_baja';
 
