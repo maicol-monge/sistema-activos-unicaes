@@ -96,6 +96,16 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(92, 0, 1, 0.2);
         }
+
+        .password-input {
+            border-right: none;
+        }
+
+        .password-toggle {
+            border-left: none;
+            cursor: pointer;
+            user-select: none;
+        }
     </style>
 </head>
 
@@ -130,15 +140,11 @@
                 <label class="form-label text-muted fw-bold" style="font-size: 0.9em;">Contraseña</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
-                    <input type="password" name="contrasena" class="form-control" placeholder="••••••••" required>
+                    <input id="password" type="password" name="contrasena" class="form-control password-input" placeholder="••••••••" required>
+                    <button id="togglePassword" type="button" class="input-group-text password-toggle" aria-label="Mostrar u ocultar contraseña">
+                        <i id="togglePasswordIcon" class="fa-solid fa-eye"></i>
+                    </button>
                 </div>
-            </div>
-
-            <div class="mb-4 form-check">
-                <input type="checkbox" class="form-check-input" name="remember" id="remember">
-                <label class="form-check-label text-muted" for="remember" style="font-size: 0.9em;">
-                    Mantener sesión iniciada
-                </label>
             </div>
 
             <button type="submit" class="btn btn-login w-100">
@@ -148,6 +154,23 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = document.getElementById('togglePassword');
+            const toggleIcon = document.getElementById('togglePasswordIcon');
+
+            if (!passwordInput || !toggleBtn || !toggleIcon) return;
+
+            toggleBtn.addEventListener('click', () => {
+                const isPassword = passwordInput.getAttribute('type') === 'password';
+                passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                toggleIcon.classList.toggle('fa-eye', !isPassword);
+                toggleIcon.classList.toggle('fa-eye-slash', isPassword);
+            });
+        });
+    </script>
 </body>
 
 </html>
