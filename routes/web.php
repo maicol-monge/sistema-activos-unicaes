@@ -94,7 +94,14 @@ Route::middleware(['auth', 'preventBack'])->group(function () {
     });
 
     Route::middleware('role:DECANO')->group(function () {
-        Route::get('/reportes', fn() => 'Reportes')->name('reportes.index');
+        Route::get('/reportes', [ReporteActivoController::class, 'decanoIndex'])
+            ->name('reportes.index');
+        Route::get('/reportes/pdf', [ReporteActivoController::class, 'decanoPdf'])
+            ->name('reportes.pdf');
+        Route::get('/reportes/csv', [ReporteActivoController::class, 'decanoCsv'])
+            ->name('reportes.csv');
+        Route::get('/reportes/excel', [ReporteActivoController::class, 'decanoExcel'])
+            ->name('reportes.excel');
     });
 
     Route::middleware(['auth', 'role:ADMIN,INVENTARIADOR'])->group(function () {
@@ -120,6 +127,8 @@ Route::middleware(['auth', 'preventBack'])->group(function () {
 
     Route::middleware('role:ADMIN')->group(function () {
         Route::resource('reportes-activos', ReporteActivoController::class);
+        Route::get('/reportes-activos/pdf', [ReporteActivoController::class, 'adminPdf'])
+            ->name('reportes-activos.pdf');
         Route::resource('movimientos-activos', MovimientoActivoController::class);
 
         // Solo ADMIN ve listado completo de asignaciones y gestiona bajas

@@ -50,6 +50,56 @@
     </div>
 </div>
 
+@if(!empty($stats ?? []))
+<div class="row g-3 mb-4">
+    @if($rol === 'ADMIN')
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Activos registrados</div>
+            <div class="fw-bold" style="font-size: 1.5rem; color: var(--rojo-principal);">{{ $stats['total_activos'] ?? 0 }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Activos aprobados</div>
+            <div class="fw-bold" style="font-size: 1.5rem; color: var(--rojo-principal);">{{ $stats['activos_aprobados'] ?? 0 }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Asignaciones activas</div>
+            <div class="fw-bold" style="font-size: 1.5rem; color: var(--rojo-principal);">{{ $stats['asignaciones_activas'] ?? 0 }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Bajas pendientes</div>
+            <div class="fw-bold" style="font-size: 1.5rem; color: var(--rojo-principal);">{{ $stats['bajas_pendientes'] ?? 0 }}</div>
+        </div>
+    </div>
+    @elseif($rol === 'DECANO')
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Mis activos</div>
+            <div class="fw-bold" style="font-size: 1.5rem; color: var(--rojo-principal);">{{ $stats['mis_activos'] ?? 0 }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Reportes totales</div>
+            <div class="fw-bold" style="font-size: 1.5rem; color: var(--rojo-principal);">{{ $stats['reportes_totales'] ?? 0 }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Reportes con problema</div>
+            <div class="fw-bold" style="font-size: 1.5rem; color: var(--rojo-principal);">{{ $stats['reportes_problema'] ?? 0 }}</div>
+        </div>
+    </div>
+    @endif
+</div>
+@endif
+
 <h5 class="fw-bold mb-3" style="color: var(--rojo-oscuro);">
     <i class="fa-solid fa-layer-group me-2"></i> Módulos Disponibles
 </h5>
