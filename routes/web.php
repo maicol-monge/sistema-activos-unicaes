@@ -108,6 +108,8 @@ Route::middleware(['auth', 'preventBack'])->group(function () {
     Route::middleware('role:ADMIN,DECANO')->group(function () {
         Route::get('/reportes', [ReporteActivoController::class, 'decanoIndex'])
             ->name('reportes.index');
+        Route::post('/reportes/ia-consulta', [ReporteActivoController::class, 'decanoIaConsulta'])
+            ->name('reportes.ia-consulta');
         Route::get('/reportes/pdf', [ReporteActivoController::class, 'decanoPdf'])
             ->name('reportes.pdf');
         Route::get('/reportes/csv', [ReporteActivoController::class, 'decanoCsv'])

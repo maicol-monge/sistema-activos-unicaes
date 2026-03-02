@@ -48,6 +48,43 @@
     </div>
 </div>
 
+<div class="card shadow-sm border-0 mb-4" style="border-top: 4px solid var(--rojo-principal); border-radius: 8px;">
+    <div class="card-body p-3 p-md-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <h5 class="fw-bold mb-1" style="color: var(--rojo-oscuro);">
+                    <i class="fa-solid fa-robot me-2"></i> Asistente de consultas (IA)
+                </h5>
+                <p class="mb-0 text-muted small">
+                    Escribe una pregunta sobre activos, bajas, asignaciones o reportes y la IA analizará los datos globales actuales para responder.
+                </p>
+            </div>
+        </div>
+        <div class="row g-2 align-items-end">
+            <div class="col-md-9">
+                <label class="form-label text-muted fw-bold mb-1">Pregunta</label>
+                <textarea
+                    id="iaPregunta"
+                    class="form-control"
+                    rows="2"
+                    placeholder="Ej.: ¿Qué categorías tienen más activos en BAJA este año?"></textarea>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button
+                    type="button"
+                    id="btnIaConsultar"
+                    class="btn btn-primary w-100 fw-bold">
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Preguntar a IA
+                </button>
+            </div>
+        </div>
+        <div id="iaRespuestaWrapper" class="mt-3 d-none">
+            <label class="form-label text-muted fw-bold mb-1">Respuesta de la IA</label>
+            <div id="iaRespuesta" class="border rounded p-3 bg-light small" style="white-space: pre-wrap;"></div>
+        </div>
+    </div>
+</div>
+
 @if(($tipo ?? 'reportes') === 'reportes' && !empty($resumen))
 <div class="row g-3 mb-4">
     <div class="col-md-3">
@@ -627,6 +664,80 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script>
     (function () {
+        const iaUrl = '{{ route('reportes.ia-consulta') }}';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnIa = document.getElementById('btnIaConsultar');
+            const txtPregunta = document.getElementById('iaPregunta');
+            const respWrapper = document.getElementById('iaRespuestaWrapper');
+            const respDiv = document.getElementById('iaRespuesta');
+
+            if (btnIa && txtPregunta && respDiv) {
+                btnIa.addEventListener('click', async () => {
+                    const pregunta = (txtPregunta.value || '').trim();
+                    if (!pregunta) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Pregunta requerida',
+                            text: 'Escribe una pregunta para que la IA pueda ayudarte.',
+                            confirmButtonColor: '#dc3545'
+                        });
+                        return;
+                    }
+
+                    btnIa.disabled = true;
+                    btnIa.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Consultando...';
+
+                    try {
+                        const payload = {
+                            pregunta,
+                            // El asistente IA debe responder con base en todos los datos,
+                            // independientemente de los filtros actuales de la pantalla.
+                            tipo: '{{ $tipo ?? 'reportes' }}',
+                            fecha_desde: '',
+                            fecha_hasta: '',
+                        };
+
+                        const resp = await fetch(iaUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': csrfToken,
+                            },
+                            body: JSON.stringify(payload),
+                        });
+
+                        const data = await resp.json();
+
+                        if (!data.ok) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'No se pudo responder',
+                                text: data.message || 'La IA no pudo generar una respuesta en este momento.',
+                                confirmButtonColor: '#dc3545'
+                            });
+                            return;
+                        }
+
+                        if (respWrapper) respWrapper.classList.remove('d-none');
+                        respDiv.textContent = data.respuesta || '';
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error de conexión',
+                            text: 'Ocurrió un problema al contactar el asistente de IA. Intenta nuevamente.',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    } finally {
+                        btnIa.disabled = false;
+                        btnIa.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles me-1"></i> Preguntar a IA';
+                    }
+                });
+            }
+        });
+
         const charts = @json($charts ?? []);
         if (!charts || Object.keys(charts).length === 0) return;
 

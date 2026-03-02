@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use App\Services\ReportesAiService;
 
 class ReporteActivoController extends Controller
 {
@@ -923,6 +924,55 @@ class ReporteActivoController extends Controller
     }
 
     /**
+     * Endpoint de IA para responder consultas en lenguaje natural
+     * usando los datos agregados del sistema (ADMIN/DECANO).
+     */
+    public function decanoIaConsulta(Request $request, ReportesAiService $aiService)
+    {
+        $data = $request->validate([
+            'pregunta' => ['required', 'string', 'max:400'],
+            'tipo' => ['nullable', Rule::in(['reportes', 'activos', 'asignaciones', 'movimientos', 'bajas', 'usuarios'])],
+            'fecha_desde' => ['nullable', 'date', 'after_or_equal:1982-04-13', 'before_or_equal:today'],
+            'fecha_hasta' => ['nullable', 'date', 'after_or_equal:1982-04-13', 'before_or_equal:today'],
+        ]);
+
+        $tipo = $data['tipo'] ?? 'reportes';
+
+        // Solo usamos fecha_desde / fecha_hasta para acotar los datos agregados
+        $filtros = [
+            'fecha_desde' => $data['fecha_desde'] ?? null,
+            'fecha_hasta' => $data['fecha_hasta'] ?? null,
+        ];
+
+        $charts = $this->buildGlobalChartsData($filtros);
+
+        $contexto = [
+            'tipo_actual' => $tipo,
+            'filtros' => $filtros,
+            'charts' => $charts,
+        ];
+
+        try {
+            $respuesta = $aiService->responderConsulta($data['pregunta'], $contexto);
+        } catch (\Throwable $e) {
+            report($e);
+            $respuesta = '';
+        }
+
+        if (trim($respuesta) === '') {
+            return response()->json([
+                'ok' => false,
+                'message' => 'No se pudo obtener una respuesta de la IA en este momento. Intenta nuevamente más tarde.',
+            ], 200);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'respuesta' => $respuesta,
+        ]);
+    }
+
+    /**
      * Construye datos agregados globales para gráficas (ADMIN y DECANO).
      */
     private function buildGlobalChartsData(array $filtros): array
@@ -1067,6 +1117,37 @@ class ReporteActivoController extends Controller
             'data' => $bajasPorEstadoRows->pluck('total')->map(fn($v) => (int) $v)->all(),
         ];
 
+        // -------- Bajas: por categoría y año (para IA) --------
+        $bajasPorCategoriaAnioQuery = BajaActivo::query()
+            ->join('activos', 'activos.id_activo', '=', 'bajas_activos.id_activo')
+            ->leftJoin('categorias_activos', 'categorias_activos.id_categoria_activo', '=', 'activos.id_categoria_activo')
+            ->select(
+                DB::raw("YEAR(bajas_activos.created_at) as anio"),
+                DB::raw('COALESCE(categorias_activos.nombre, "Sin categoría") as categoria'),
+                DB::raw('COUNT(*) as total')
+            );
+
+        if ($fechaDesde) {
+            $bajasPorCategoriaAnioQuery->whereDate('bajas_activos.created_at', '>=', $fechaDesde);
+        }
+        if ($fechaHasta) {
+            $bajasPorCategoriaAnioQuery->whereDate('bajas_activos.created_at', '<=', $fechaHasta);
+        }
+
+        $bajasPorCategoriaAnioRows = $bajasPorCategoriaAnioQuery
+            ->groupBy('anio', 'categoria')
+            ->orderBy('anio')
+            ->orderBy('categoria')
+            ->get();
+
+        $bajasPorCategoriaAnio = $bajasPorCategoriaAnioRows->map(function ($row) {
+            return [
+                'anio' => (int) $row->anio,
+                'categoria' => $row->categoria,
+                'total' => (int) $row->total,
+            ];
+        })->all();
+
         // -------- Asignaciones: por estado --------
         $asignacionesPorEstadoQuery = AsignacionActivo::query()
             ->select('estado_asignacion', DB::raw('COUNT(*) as total'));
@@ -1167,6 +1248,77 @@ class ReporteActivoController extends Controller
             })->all(),
         ];
 
+        // -------- Asignaciones: resumen por usuario (top 200) --------
+        $asignacionesPorUsuarioQuery = AsignacionActivo::query()
+            ->join('users', 'users.id_usuario', '=', 'asignaciones_activos.asignado_a')
+            ->select(
+                'users.id_usuario',
+                'users.nombre as usuario',
+                DB::raw('COUNT(*) as total_asignaciones'),
+                DB::raw("SUM(CASE WHEN estado_asignacion = 'ACEPTADO' THEN 1 ELSE 0 END) as aceptadas"),
+                DB::raw("SUM(CASE WHEN estado_asignacion = 'DEVOLUCION' THEN 1 ELSE 0 END) as devolucion"),
+                DB::raw("SUM(CASE WHEN estado_asignacion = 'DEVUELTO' THEN 1 ELSE 0 END) as devueltos")
+            );
+
+        if ($fechaDesde) {
+            $asignacionesPorUsuarioQuery->whereDate('fecha_asignacion', '>=', $fechaDesde);
+        }
+        if ($fechaHasta) {
+            $asignacionesPorUsuarioQuery->whereDate('fecha_asignacion', '<=', $fechaHasta);
+        }
+
+        $asignacionesPorUsuarioRows = $asignacionesPorUsuarioQuery
+            ->groupBy('users.id_usuario', 'users.nombre')
+            ->orderByDesc('total_asignaciones')
+            ->limit(200)
+            ->get();
+
+        $asignacionesPorUsuario = $asignacionesPorUsuarioRows->map(function ($row) {
+            return [
+                'usuario' => $row->usuario,
+                'total_asignaciones' => (int) $row->total_asignaciones,
+                'aceptadas' => (int) ($row->aceptadas ?? 0),
+                'devolucion' => (int) ($row->devolucion ?? 0),
+                'devueltos' => (int) ($row->devueltos ?? 0),
+            ];
+        })->all();
+
+        // -------- Asignaciones: por usuario y año (para IA, top global) --------
+        $asignacionesPorUsuarioAnioQuery = AsignacionActivo::query()
+            ->join('users', 'users.id_usuario', '=', 'asignaciones_activos.asignado_a')
+            ->select(
+                DB::raw('YEAR(fecha_asignacion) as anio'),
+                'users.id_usuario',
+                'users.nombre as usuario',
+                DB::raw('COUNT(*) as total_asignaciones')
+            )
+            ->whereNotNull('fecha_asignacion');
+
+        if ($fechaDesde) {
+            $asignacionesPorUsuarioAnioQuery->whereDate('fecha_asignacion', '>=', $fechaDesde);
+        }
+        if ($fechaHasta) {
+            $asignacionesPorUsuarioAnioQuery->whereDate('fecha_asignacion', '<=', $fechaHasta);
+        }
+
+        // Para acotar tamaño, solo consideramos años desde 2000 en adelante
+        $asignacionesPorUsuarioAnioQuery->whereYear('fecha_asignacion', '>=', 2000);
+
+        $asignacionesPorUsuarioAnioRows = $asignacionesPorUsuarioAnioQuery
+            ->groupBy('anio', 'users.id_usuario', 'users.nombre')
+            ->orderBy('anio')
+            ->orderByDesc('total_asignaciones')
+            ->limit(1000)
+            ->get();
+
+        $asignacionesPorUsuarioAnio = $asignacionesPorUsuarioAnioRows->map(function ($row) {
+            return [
+                'anio' => (int) $row->anio,
+                'usuario' => $row->usuario,
+                'total_asignaciones' => (int) $row->total_asignaciones,
+            ];
+        })->all();
+
         return [
             'activosPorCategoria' => $activosPorCategoria,
             'activosPorEstado' => $activosPorEstado,
@@ -1174,10 +1326,13 @@ class ReporteActivoController extends Controller
             'reportesPorEstado' => $reportesPorEstado,
             'reportesPorMes' => $reportesPorMes,
             'bajasPorEstado' => $bajasPorEstado,
+            'bajasPorCategoriaAnio' => $bajasPorCategoriaAnio,
             'asignacionesPorEstado' => $asignacionesPorEstado,
             'valorPorCategoria' => $valorPorCategoria,
             'histogramaValorActivos' => $histogramaValorActivos,
             'scatterValorVsReportes' => $scatterValorVsReportes,
+            'asignacionesPorUsuario' => $asignacionesPorUsuario,
+            'asignacionesPorUsuarioAnio' => $asignacionesPorUsuarioAnio,
         ];
     }
 }
