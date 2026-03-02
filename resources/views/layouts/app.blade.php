@@ -169,7 +169,7 @@
                             </li>
                             <li>
                                 <a class="dropdown-item" href="{{ route('bajas-activos.index') }}">
-                                    <i class="fa-solid fa-circle-down me-1"></i> Solicitudes de Baja
+                                    <i class="fa-solid fa-circle-down me-1"></i> Bajas de Activos
                                 </a>
                             </li>
                             <li>
@@ -226,11 +226,6 @@
                                     <i class="fa-solid fa-clipboard-check me-1"></i> Reportar Estado
                                 </a>
                             </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('bajas-activos.create') }}">
-                                    <i class="fa-solid fa-minus-circle me-1"></i> Solicitar Baja
-                                </a>
-                            </li>
                         </ul>
                     </li>
                     @endif
@@ -256,15 +251,7 @@
                     </li>
                     @endif
 
-                    @if(in_array($rol, ['ENCARGADO', 'INVENTARIADOR', 'DECANO']))
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('bajas-activos.create') }}">
-                            <i class="fa-solid fa-minus-circle me-1"></i> Solicitar Baja
-                        </a>
-                    </li>
-                    @endif
-
-                    @if($rol === 'DECANO')
+                    @if(in_array($rol, ['ADMIN', 'DECANO']))
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('reportes.index') }}">
                             <i class="fa-solid fa-chart-line me-1"></i> Reportes y Consultas

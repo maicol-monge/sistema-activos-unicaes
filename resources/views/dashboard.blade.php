@@ -190,8 +190,24 @@
                         <i class="fa-solid fa-circle-down fa-2x"></i>
                     </div>
                     <div>
-                        <h5 class="fw-bold mb-1">Solicitudes de Baja</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.85em;">Aprobar, rechazar y controlar las bajas de activos.</p>
+                        <h5 class="fw-bold mb-1">Bajas de Activos</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Registrar y controlar las bajas de activos.</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ route('reportes.index') }}" class="text-decoration-none text-dark">
+            <div class="card card-module shadow-sm h-100 p-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="fa-solid fa-chart-line fa-2x"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Reportes y Consultas</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.85em;">Visualizar estadísticas globales y exportar reportes ejecutivos del sistema.</p>
                     </div>
                 </div>
             </div>
@@ -290,21 +306,6 @@
             </div>
         </a>
     </div>
-    <div class="col-md-6 col-lg-4">
-        <a href="{{ route('bajas-activos.create') }}" class="text-decoration-none text-dark">
-            <div class="card card-module shadow-sm h-100 p-3">
-                <div class="card-body d-flex align-items-center">
-                    <div class="icon-wrapper me-3">
-                        <i class="fa-solid fa-arrow-down-long fa-2x"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold mb-1">Solicitar Baja</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.85em;">Pedir baja de activos que ya no usas.</p>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
 
     @elseif($rol === 'ENCARGADO')
     <div class="col-md-6 col-lg-4">
@@ -352,21 +353,6 @@
             </div>
         </a>
     </div>
-    <div class="col-md-6 col-lg-4">
-        <a href="{{ route('bajas-activos.create') }}" class="text-decoration-none text-dark">
-            <div class="card card-module shadow-sm h-100 p-3">
-                <div class="card-body d-flex align-items-center">
-                    <div class="icon-wrapper me-3">
-                        <i class="fa-solid fa-arrow-down-long fa-2x"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold mb-1">Solicitar Baja</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.85em;">Enviar solicitudes de baja de tus activos asignados.</p>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
 
     @elseif($rol === 'DECANO')
     <div class="col-md-6 col-lg-4">
@@ -409,21 +395,6 @@
                     <div>
                         <h5 class="fw-bold mb-1">Reportar Estado</h5>
                         <p class="text-muted mb-0" style="font-size: 0.85em;">Informar estado y consultar historial por activo.</p>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-6 col-lg-4">
-        <a href="{{ route('bajas-activos.create') }}" class="text-decoration-none text-dark">
-            <div class="card card-module shadow-sm h-100 p-3">
-                <div class="card-body d-flex align-items-center">
-                    <div class="icon-wrapper me-3">
-                        <i class="fa-solid fa-arrow-down-long fa-2x"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold mb-1">Solicitar Baja</h5>
-                        <p class="text-muted mb-0" style="font-size: 0.85em;">Enviar solicitudes de baja de tus activos.</p>
                     </div>
                 </div>
             </div>

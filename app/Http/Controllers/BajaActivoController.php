@@ -52,77 +52,6 @@ class BajaActivoController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        $usuario = auth()->user();
-
-        if (in_array($usuario->rol, ['ENCARGADO', 'INVENTARIADOR'])) {
-            // Solo activos actualmente asignados al usuario (encargado o inventariador)
-            $activos = Activo::where('estado', 'APROBADO')
-                ->whereHas('asignaciones', function ($q) use ($usuario) {
-                    $q->where('asignado_a', $usuario->id_usuario)
-                        ->where('estado', 1)
-                        ->whereIn('estado_asignacion', ['ACEPTADO', 'DEVOLUCION']);
-                })
-                ->orderBy('nombre')
-                ->get();
-        } else {
-            // ADMIN u otros roles autorizados: todos los activos aprobados
-            $activos = Activo::where('estado', 'APROBADO')
-                ->orderBy('nombre')
-                ->get();
-        }
-
-        return view('bajas-activos.create', compact('activos'));
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'id_activo' => 'required|exists:activos,id_activo',
-            'motivo' => 'required|string|max:255',
-        ]);
-
-        $usuario = auth()->user();
-
-        // Si es ENCARGADO o INVENTARIADOR, validar que el activo le pertenece actualmente
-        if (in_array($usuario->rol, ['ENCARGADO', 'INVENTARIADOR'])) {
-            $tieneAsignacion = \App\Models\AsignacionActivo::where('id_activo', $request->id_activo)
-                ->where('asignado_a', $usuario->id_usuario)
-                ->where('estado', 1)
-                ->whereIn('estado_asignacion', ['ACEPTADO', 'DEVOLUCION'])
-                ->exists();
-
-            if (!$tieneAsignacion) {
-                return back()
-                    ->with('err', 'Solo puedes solicitar baja de activos que tienes asignados.')
-                    ->withInput();
-            }
-        }
-
-        BajaActivo::create([
-            'id_activo' => $request->id_activo,
-            'id_usuario_solicitante' => $usuario->id_usuario,
-            'motivo' => $request->motivo,
-            'estado' => 'PENDIENTE',
-        ]);
-
-        // Redirigir al dashboard para roles que no gestionan el inventario general
-        if (in_array($usuario->rol, ['ENCARGADO', 'DECANO', 'INVENTARIADOR'])) {
-            return redirect()
-                ->route('dashboard')
-                ->with('ok', 'Solicitud de baja enviada correctamente.');
-        }
-
-        // Para ADMIN u otros roles que sí gestionan activos, mantener flujo actual
-        return redirect()
-            ->route('activos.index')
-            ->with('ok', 'Solicitud de baja enviada correctamente.');
-    }
-
     /**
      * Display the specified resource.
      */
@@ -156,26 +85,21 @@ class BajaActivoController extends Controller
         $activo = $solicitud->activo;
         $usuario = auth()->user();
 
+        // Verificar que el activo no tenga asignaciones activas (debe estar devuelto o sin asignaciones)
+        $tieneAsignacionesActivas = AsignacionActivo::where('id_activo', $activo->id_activo)
+            ->where('estado', 1)
+            ->exists();
+
+        if ($tieneAsignacionesActivas) {
+            return redirect()
+                ->route('bajas-activos.index')
+                ->with('err', 'No se puede dar de baja un activo que aún tiene asignaciones activas o pendientes de devolución.');
+        }
+
         DB::transaction(function () use ($solicitud, $activo, $usuario) {
             // Cambiar el estado del activo a 'BAJA'
             $activo->estado = 'BAJA';
             $activo->save();
-
-            // Cerrar cualquier asignación activa asociada a este activo
-            $asignacionesActivas = AsignacionActivo::where('id_activo', $activo->id_activo)
-                ->where('estado', 1)
-                ->get();
-
-            foreach ($asignacionesActivas as $asignacion) {
-                $nuevoEstadoAsignacion = $asignacion->estado_asignacion === 'PENDIENTE'
-                    ? 'RECHAZADO'
-                    : 'CARGADO';
-
-                $asignacion->estado_asignacion = $nuevoEstadoAsignacion;
-                $asignacion->estado = 0;
-                $asignacion->fecha_respuesta = now();
-                $asignacion->save();
-            }
 
             // Marcar la solicitud como APROBADA (no se elimina para mantener historial)
             $solicitud->estado = 'APROBADA';

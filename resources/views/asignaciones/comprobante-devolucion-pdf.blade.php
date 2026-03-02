@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>{{ $numero ?? 'Comprobante' }}</title>
+    <title>{{ $numero ?? 'Comprobante de Devolución' }}</title>
     <style>
         :root {
             --rojo-principal: #7e0001;
@@ -164,7 +164,7 @@
     @php
     $a = $asignacion;
     $activo = $a->activo;
-    $aceptacion = $fechaAceptacion ? \Carbon\Carbon::parse($fechaAceptacion) : null;
+    $devolucion = $fechaDevolucion ? \Carbon\Carbon::parse($fechaDevolucion) : null;
     @endphp
 
     <div class="header">
@@ -181,7 +181,7 @@
         </div>
 
         <div class="comprobante-meta">
-            <div class="numero">{{ $numero ?? 'Comprobante' }}</div>
+            <div class="numero">{{ $numero ?? 'Comprobante de Devolución' }}</div>
             <div style="margin-top:6px;">Fecha: {{ now()->format('d/m/Y') }}</div>
         </div>
     </div>
@@ -191,11 +191,11 @@
                 <div class="kv">
                     <div>
                         <div class="pair">
-                            <div class="kv-label">Encargado (recibe)</div>
+                            <div class="kv-label">Encargado (entrega)</div>
                             <div class="kv-value">{{ $a->usuarioAsignado?->nombre ?? '—' }}</div>
                         </div>
                         <div class="pair">
-                            <div class="kv-label">Asignado por</div>
+                            <div class="kv-label">Asignado originalmente por</div>
                             <div class="kv-value">{{ $a->usuarioAsignador?->nombre ?? 'Sistema' }}</div>
                         </div>
                         <div class="pair">
@@ -209,14 +209,14 @@
                             </div>
                         </div>
                         <div class="pair">
-                            <div class="kv-label">Fecha de aceptación</div>
+                            <div class="kv-label">Fecha de devolución</div>
                             <div class="kv-value">
-                                @if($aceptacion)
-                                    {{ $aceptacion->format('d/m/Y H:i') }}
-                                @elseif(in_array($a->estado_asignacion, ['ACEPTADO', 'DEVOLUCION', 'CARGADO']) && $a->fecha_respuesta)
+                                @if($devolucion)
+                                    {{ $devolucion->format('d/m/Y H:i') }}
+                                @elseif($a->fecha_respuesta)
                                     {{ \Carbon\Carbon::parse($a->fecha_respuesta)->format('d/m/Y H:i') }}
                                 @else
-                                    Pendiente de aceptación
+                                    —
                                 @endif
                             </div>
                         </div>
@@ -227,7 +227,7 @@
             <div class="col" style="text-align:right;">
                 <div class="numero">{{ $numero ?? '—' }}</div>
                 <div style="height:8px"></div>
-                <div class="badge-estado">{{ $a->estado_asignacion ?? '—' }}</div>
+                <div class="badge-estado">DEVUELTO</div>
             </div>
         </div>
 
@@ -247,7 +247,7 @@
                         <div class="kv-label">Código</div>
                         <div class="kv-value">{{ $activo?->codigo ?? '—' }}</div>
                         <div class="kv-label" style="margin-top:8px">Serial</div>
-                        <div class="kv-value">{{ $activo?->serial ?? '—' }}</div>
+                        <div class="kv-value">{{ $activo?->serial ?? 'd' }}</div>
                     </div>
                 </div>
 
@@ -269,26 +269,35 @@
             </div>
         </div>
 
+        <div class="section" style="margin-top:12px;">
+            <div class="kv-label">Motivo de la devolución</div>
+            <div class="detalle" style="margin-top:6px;">
+                <div class="kv-value" style="font-weight:400; white-space:pre-line;">
+                    {{ $a->motivo_devolucion ?? '—' }}
+                </div>
+            </div>
+        </div>
+
         <div class="hr"></div>
 
         <div class="two-cols">
             <div class="col">
-                <div class="kv-label">Firma encargado</div>
+                <div class="kv-label">Firma de quien entrega</div>
                 <div class="sign"></div>
                 <div class="kv-value" style="text-align:center; margin-top:4px; font-size:11px;">
                     {{ $a->usuarioAsignado?->nombre ?? '—' }}
                 </div>
             </div>
             <div class="col">
-                <div class="kv-label">Firma asignador</div>
+                <div class="kv-label">Firma de quien recibe</div>
                 <div class="sign"></div>
                 <div class="kv-value" style="text-align:center; margin-top:4px; font-size:11px;">
-                    {{ $a->usuarioAsignador?->nombre ?? '—' }}
+                    &nbsp;
                 </div>
             </div>
         </div>
 
-        <div class="footer-note">Este comprobante certifica la aceptación y responsabilidad del activo indicado.</div>
+        <div class="footer-note">Este comprobante certifica que el encargado ha devuelto el activo indicado y que la devolución ha sido registrada en el sistema.</div>
     </div>
 
 </body>
