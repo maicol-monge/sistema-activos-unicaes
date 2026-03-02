@@ -130,7 +130,7 @@ class AsignacionActivoController extends Controller
             'fecha_hasta' => ['nullable', 'date', 'after_or_equal:fecha_desde'],
         ]);
 
-        $asignaciones = AsignacionActivo::with([
+        $asignacionesQuery = AsignacionActivo::with([
             'activo',
             'usuarioAsignado',
             'usuarioAsignador'
@@ -153,9 +153,12 @@ class AsignacionActivoController extends Controller
             })
             ->when(!empty($filtros['estado_asignacion']), fn($query) => $query->where('estado_asignacion', $filtros['estado_asignacion']))
             ->when(!empty($filtros['fecha_desde']), fn($query) => $query->whereDate('fecha_asignacion', '>=', $filtros['fecha_desde']))
-            ->when(!empty($filtros['fecha_hasta']), fn($query) => $query->whereDate('fecha_asignacion', '<=', $filtros['fecha_hasta']))
+            ->when(!empty($filtros['fecha_hasta']), fn($query) => $query->whereDate('fecha_asignacion', '<=', $filtros['fecha_hasta']));
+
+        $asignaciones = $asignacionesQuery
             ->orderBy('id_asignacion', 'desc')
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
         return view('asignaciones.index', compact('asignaciones', 'filtros'));
     }

@@ -59,7 +59,7 @@
         box-shadow: 0 4px 8px rgba(126, 0, 1, 0.18);
     }
 
-    /* Scroll en la tabla (sin paginación) */
+    /* Contenedor tabla */
     .table-scroll {
         max-height: 60vh;
         overflow: auto;
@@ -120,7 +120,7 @@
     </div>
 </div>
 
-<div class="table-responsive table-scroll bg-white rounded-3 shadow-sm border">
+<div class="table-responsive table-scroll bg-white rounded-3 shadow-sm border mb-3">
     <table class="table table-custom table-hover mb-0">
         <thead>
             <tr>
@@ -247,6 +247,10 @@
             @endforelse
         </tbody>
     </table>
+</div>
+
+<div class="d-flex justify-content-end">
+    {{ $asignaciones->links() }}
 </div>
 
 @endsection
