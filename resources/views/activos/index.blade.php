@@ -36,6 +36,12 @@
     .table-custom tbody tr:hover {
         background-color: #fdfaf3;
     }
+
+    /* Scroll en la tabla */
+    .table-scroll {
+        max-height: 60vh;
+        overflow: auto;
+    }
 </style>
 
 @php $rol = auth()->user()->rol ?? null; @endphp
@@ -52,6 +58,17 @@
         <a href="{{ route('activos.create') }}" class="btn btn-nuevo shadow-sm">
             <i class="fa-solid fa-plus me-1"></i> Nuevo Activo
         </a>
+        @endif
+
+        @if($rol === 'ADMIN')
+        <button
+            type="button"
+            class="btn btn-outline-secondary shadow-sm js-inventario-pdf"
+            data-check-url="{{ route('activos.pdf.check', request()->query()) }}"
+            data-preview-url="{{ route('activos.pdf.preview', request()->query()) }}"
+            data-download-url="{{ route('activos.pdf', request()->query()) }}">
+            <i class="fa-solid fa-file-pdf me-1"></i> PDF inventario
+        </button>
         @endif
     </div>
 </div>
@@ -97,9 +114,9 @@
                 <label class="form-label text-muted fw-bold mb-1">Condición</label>
                 <select name="condicion" class="form-select">
                     <option value="">Todas</option>
-                    <option value="BUENO" @selected(($filtros['condicion'] ?? '' )==='BUENO')>BUENO</option>
-                    <option value="DANIADO" @selected(($filtros['condicion'] ?? '' )==='DANIADO')>DAÑADO</option>
-                    <option value="REGULAR" @selected(($filtros['condicion'] ?? '' )==='REGULAR')>REGULAR</option>
+                    <option value="BUENO" @selected(($filtros['condicion'] ?? '' )==='BUENO' )>BUENO</option>
+                    <option value="DANIADO" @selected(($filtros['condicion'] ?? '' )==='DANIADO' )>DAÑADO</option>
+                    <option value="REGULAR" @selected(($filtros['condicion'] ?? '' )==='REGULAR' )>REGULAR</option>
                 </select>
             </div>
 
@@ -115,6 +132,28 @@
                 </select>
             </div>
 
+            <div class="col-md-2">
+                <label class="form-label text-muted fw-bold mb-1">Fecha adquisición desde</label>
+                <input
+                    type="date"
+                    name="fecha_desde"
+                    class="form-control"
+                    value="{{ $filtros['fecha_desde'] ?? '' }}"
+                    min="1982-04-13"
+                    max="{{ now()->format('Y-m-d') }}">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-muted fw-bold mb-1">Fecha adquisición hasta</label>
+                <input
+                    type="date"
+                    name="fecha_hasta"
+                    class="form-control"
+                    value="{{ $filtros['fecha_hasta'] ?? '' }}"
+                    min="1982-04-13"
+                    max="{{ now()->format('Y-m-d') }}">
+            </div>
+
             <div class="col-12 d-flex justify-content-end gap-2 pt-2">
                 <a href="{{ route('activos.index') }}" class="btn btn-light border">
                     <i class="fa-solid fa-broom me-1"></i> Limpiar
@@ -127,7 +166,7 @@
     </div>
 </div>
 
-<div class="table-responsive bg-white rounded-3 shadow-sm border overflow-hidden">
+<div class="table-responsive table-scroll bg-white rounded-3 shadow-sm border">
     <table class="table table-custom table-hover mb-0">
         <thead>
             <tr>
@@ -167,20 +206,20 @@
                 </td>
                 <td class="text-center pe-4">
                     @php
-                        $usuario = auth()->user();
-                        $puedeEditar = false;
-                        $puedeDarBaja = false;
+                    $usuario = auth()->user();
+                    $puedeEditar = false;
+                    $puedeDarBaja = false;
 
-                        if ($usuario->rol === 'ADMIN') {
-                            $puedeEditar = true; // ADMIN puede editar cualquier activo
-                            $puedeDarBaja = $activo->estado === 'APROBADO';
-                        }
+                    if ($usuario->rol === 'ADMIN') {
+                    $puedeEditar = true; // ADMIN puede editar cualquier activo
+                    $puedeDarBaja = $activo->estado === 'APROBADO';
+                    }
 
-                        if ($usuario->rol === 'INVENTARIADOR'
-                            && $activo->registrado_por == $usuario->id_usuario
-                            && $activo->estado === 'PENDIENTE') {
-                            $puedeEditar = true;
-                        }
+                    if ($usuario->rol === 'INVENTARIADOR'
+                    && $activo->registrado_por == $usuario->id_usuario
+                    && $activo->estado === 'PENDIENTE') {
+                    $puedeEditar = true;
+                    }
                     @endphp
 
                     <div class="d-inline-flex gap-1 justify-content-center">
@@ -201,8 +240,7 @@
                             type="button"
                             class="btn btn-sm btn-danger btn-baja-directa"
                             data-id="{{ $activo->id_activo }}"
-                            title="Dar de baja"
-                        >
+                            title="Dar de baja">
                             <i class="fa-solid fa-arrow-down-long"></i>
                         </button>
 
@@ -213,7 +251,7 @@
                         @endif
 
                         @if(!$puedeEditar && !$puedeDarBaja)
-                            <span class="text-muted">-</span>
+                        <span class="text-muted">-</span>
                         @endif
                     </div>
                 </td>
@@ -236,9 +274,56 @@
 
 @endsection
 
+<!-- Modal: Vista previa del inventario en PDF -->
+<div class="modal fade" id="inventarioPdfModal" tabindex="-1" aria-labelledby="inventarioPdfModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inventarioPdfModalLabel">
+                    <i class="fa-solid fa-file-pdf me-2"></i> Vista previa del inventario
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-0" style="height: min(75vh, 820px);">
+                <iframe
+                    id="inventarioPdfFrame"
+                    title="Vista previa inventario PDF"
+                    src=""
+                    style="width: 100%; height: 100%; border: 0;"></iframe>
+            </div>
+            <div class="modal-footer">
+                <a id="inventarioPdfDownloadBtn" class="btn btn-primary" href="#" target="_blank">
+                    <i class="fa-solid fa-download me-1"></i> Descargar PDF
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+ </div>
+
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Mensajes flash (éxito / error) para acciones relacionadas al inventario/PDF
+        @if(session('ok'))
+        Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: '{{ session('ok') }}',
+            confirmButtonColor: '#0d6efd'
+        });
+        @endif
+
+        @if(session('err'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Atención',
+            text: '{{ session('err') }}',
+            confirmButtonColor: '#dc3545'
+        });
+        @endif
+
+        // Flujo de baja directa
         document.addEventListener('click', async function(e) {
             const btn = e.target.closest('.btn-baja-directa');
             if (!btn) return;
@@ -271,6 +356,58 @@
                 form.submit();
             }
         });
+
+        // Vista previa flotante del PDF de inventario
+        const modalEl = document.getElementById('inventarioPdfModal');
+        const iframeEl = document.getElementById('inventarioPdfFrame');
+        const downloadBtn = document.getElementById('inventarioPdfDownloadBtn');
+        const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+
+        document.querySelectorAll('.js-inventario-pdf').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const checkUrl = btn.getAttribute('data-check-url');
+                const previewUrl = btn.getAttribute('data-preview-url');
+                const downloadUrl = btn.getAttribute('data-download-url');
+
+                if (!checkUrl) return;
+
+                try {
+                    const resp = await fetch(checkUrl, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const data = await resp.json();
+
+                    if (!data.ok) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Demasiados registros',
+                            text: data.message || 'El listado es muy grande para generar un PDF. Refina los filtros.',
+                            confirmButtonColor: '#dc3545'
+                        });
+                        return; // No abrir el modal si supera el límite
+                    }
+
+                    if (iframeEl && previewUrl) iframeEl.src = previewUrl;
+                    if (downloadBtn && downloadUrl) downloadBtn.href = downloadUrl;
+
+                    if (modal) modal.show();
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo verificar el inventario para el PDF. Intenta nuevamente.',
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
+            });
+        });
+
+        if (modalEl && iframeEl) {
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                iframeEl.src = '';
+            });
+        }
     });
 </script>
 @endpush

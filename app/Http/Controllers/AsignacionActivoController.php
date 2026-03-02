@@ -64,12 +64,16 @@ class AsignacionActivoController extends Controller
             'q' => ['nullable', 'string', 'max:100'],
             'id_categoria_activo' => ['nullable', 'exists:categorias_activos,id_categoria_activo'],
             'tipo' => ['nullable', 'in:FIJO,INTANGIBLE'],
+            'estado_asignacion' => ['nullable', 'in:ACEPTADO,DEVOLUCION,CARGADO,TODOS'],
         ]);
 
-        $asignaciones = AsignacionActivo::with(['activo.categoria', 'usuarioAsignador'])
+        // Por defecto, mostrar solo activos actualmente asignados (ACEPTADO)
+        if (!isset($filtros['estado_asignacion']) || $filtros['estado_asignacion'] === null) {
+            $filtros['estado_asignacion'] = 'ACEPTADO';
+        }
+
+        $asignacionesQuery = AsignacionActivo::with(['activo.categoria', 'usuarioAsignador'])
             ->where('asignado_a', auth()->user()->id_usuario)
-            ->where('estado', 1)
-            ->where('estado_asignacion', 'ACEPTADO')
             ->when(!empty($filtros['q']), function ($query) use ($filtros) {
                 $texto = trim($filtros['q']);
                 $query->whereHas('activo', function ($q) use ($texto) {
@@ -87,7 +91,22 @@ class AsignacionActivoController extends Controller
                 $query->whereHas('activo', function ($q) use ($filtros) {
                     $q->where('tipo', $filtros['tipo']);
                 });
-            })
+            });
+
+        // Filtro por estado de asignación (Asignado / Devolución pendiente / Devuelto / Todos)
+        $estadoFiltro = $filtros['estado_asignacion'];
+
+        if ($estadoFiltro === 'ACEPTADO') {
+            $asignacionesQuery->where('estado_asignacion', 'ACEPTADO')->where('estado', 1);
+        } elseif ($estadoFiltro === 'DEVOLUCION') {
+            $asignacionesQuery->where('estado_asignacion', 'DEVOLUCION')->where('estado', 1);
+        } elseif ($estadoFiltro === 'CARGADO') {
+            $asignacionesQuery->where('estado_asignacion', 'CARGADO')->where('estado', 0);
+        } else { // TODOS
+            $asignacionesQuery->whereIn('estado_asignacion', ['ACEPTADO', 'DEVOLUCION', 'CARGADO']);
+        }
+
+        $asignaciones = $asignacionesQuery
             ->orderBy('id_asignacion', 'desc')
             ->paginate(10)
             ->withQueryString();
@@ -111,7 +130,7 @@ class AsignacionActivoController extends Controller
             'fecha_hasta' => ['nullable', 'date', 'after_or_equal:fecha_desde'],
         ]);
 
-        $asignaciones = AsignacionActivo::with([
+        $asignacionesQuery = AsignacionActivo::with([
             'activo',
             'usuarioAsignado',
             'usuarioAsignador'
@@ -134,9 +153,11 @@ class AsignacionActivoController extends Controller
             })
             ->when(!empty($filtros['estado_asignacion']), fn($query) => $query->where('estado_asignacion', $filtros['estado_asignacion']))
             ->when(!empty($filtros['fecha_desde']), fn($query) => $query->whereDate('fecha_asignacion', '>=', $filtros['fecha_desde']))
-            ->when(!empty($filtros['fecha_hasta']), fn($query) => $query->whereDate('fecha_asignacion', '<=', $filtros['fecha_hasta']))
+            ->when(!empty($filtros['fecha_hasta']), fn($query) => $query->whereDate('fecha_asignacion', '<=', $filtros['fecha_hasta']));
+
+        $asignaciones = $asignacionesQuery
             ->orderBy('id_asignacion', 'desc')
-            ->paginate(10)
+            ->paginate(15)
             ->withQueryString();
 
         return view('asignaciones.index', compact('asignaciones', 'filtros'));
@@ -438,6 +459,78 @@ class AsignacionActivoController extends Controller
         ])->setPaper('letter');
 
         // `stream` sirve el PDF en el navegador (Content-Disposition: inline), ideal para iframe/modal.
+        return $pdf->stream($fileName);
+    }
+
+    public function comprobanteDevolucion(AsignacionActivo $asignacion)
+    {
+        // Solo el usuario que tuvo el activo asignado puede ver el comprobante de devolución
+        if ($asignacion->asignado_a != auth()->user()->id_usuario) {
+            abort(403, 'No autorizado');
+        }
+
+        // Comprobante solo para asignaciones ya devueltas/cerradas
+        if (!($asignacion->estado_asignacion === 'CARGADO' && (int) $asignacion->estado === 0)) {
+            return back()->with('err', 'Solo se puede generar comprobante de devolución para activos ya devueltos.');
+        }
+
+        $asignacion->load([
+            'activo.categoria',
+            'usuarioAsignador',
+            'usuarioAsignado',
+        ]);
+
+        $id = (int) $asignacion->id_asignacion;
+        $fechaDevolucion = MovimientoActivo::where('id_activo', $asignacion->id_activo)
+            ->where('tipo', 'DEVOLUCION')
+            ->where('observaciones', 'like', "%ID asignación: {$id}%")
+            ->orderByDesc('created_at')
+            ->value('created_at');
+
+        $numero = 'DEV-' . str_pad((string) $asignacion->id_asignacion, 6, '0', STR_PAD_LEFT);
+        $fileName = "{$numero}.pdf";
+
+        $pdf = Pdf::loadView('asignaciones.comprobante-devolucion-pdf', [
+            'asignacion' => $asignacion,
+            'fechaDevolucion' => $fechaDevolucion,
+            'numero' => $numero,
+        ])->setPaper('letter');
+
+        return $pdf->download($fileName);
+    }
+
+    public function comprobanteDevolucionPreview(AsignacionActivo $asignacion)
+    {
+        if ($asignacion->asignado_a != auth()->user()->id_usuario) {
+            abort(403, 'No autorizado');
+        }
+
+        if (!($asignacion->estado_asignacion === 'CARGADO' && (int) $asignacion->estado === 0)) {
+            return back()->with('err', 'Solo se puede previsualizar el comprobante de devolución de activos ya devueltos.');
+        }
+
+        $asignacion->load([
+            'activo.categoria',
+            'usuarioAsignador',
+            'usuarioAsignado',
+        ]);
+
+        $id = (int) $asignacion->id_asignacion;
+        $fechaDevolucion = MovimientoActivo::where('id_activo', $asignacion->id_activo)
+            ->where('tipo', 'DEVOLUCION')
+            ->where('observaciones', 'like', "%ID asignación: {$id}%")
+            ->orderByDesc('created_at')
+            ->value('created_at');
+
+        $numero = 'DEV-' . str_pad((string) $asignacion->id_asignacion, 6, '0', STR_PAD_LEFT);
+        $fileName = "{$numero}.pdf";
+
+        $pdf = Pdf::loadView('asignaciones.comprobante-devolucion-pdf', [
+            'asignacion' => $asignacion,
+            'fechaDevolucion' => $fechaDevolucion,
+            'numero' => $numero,
+        ])->setPaper('letter');
+
         return $pdf->stream($fileName);
     }
 

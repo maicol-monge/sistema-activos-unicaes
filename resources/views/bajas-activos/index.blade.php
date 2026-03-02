@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Solicitudes de Baja - UNICAES')
+@section('title', 'Bajas de Activos - UNICAES')
 
 @section('content')
 
@@ -28,7 +28,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0" style="color: var(--rojo-principal); font-weight: 700;">
-        <i class="fa-solid fa-arrow-down-square-wide-short me-2"></i> Solicitudes de Baja de Activos
+        <i class="fa-solid fa-arrow-down-square-wide-short me-2"></i> Bajas de Activos
     </h2>
 </div>
 
@@ -49,7 +49,7 @@
             </div>
 
             <div class="col-md-2">
-                <label class="form-label text-muted fw-bold mb-1">Estado</label>
+                <label class="form-label text-muted fw-bold mb-1">Estado de la baja</label>
                 <select name="estado" class="form-select">
                     <option value="">Todos</option>
                     <option value="PENDIENTE" @selected(($filtros['estado'] ?? '' )==='PENDIENTE')>PENDIENTE</option>
@@ -83,7 +83,7 @@
     <div class="card-body p-4">
         @if($solicitudes->isEmpty())
             <div class="alert alert-info text-center">
-                No hay solicitudes de baja que coincidan con los filtros.
+                No hay bajas que coincidan con los filtros.
             </div>
         @else
             <div class="table-responsive">
@@ -92,8 +92,8 @@
                         <tr>
                             <th>Activo</th>
                             <th>Código del Activo</th>
-                            <th>Solicitante</th>
-                            <th>Fecha de Solicitud</th>
+                            <th>Registrado por</th>
+                            <th>Fecha de registro</th>
                             <th>Estado</th>
                             <th>Motivo</th>
                             <th>Acciones</th>
@@ -130,7 +130,7 @@
                                         <button type="button"
                                             class="btn btn-secondary btn-sm btn-rechazar-solicitud-baja"
                                             data-id="{{ $solicitud->id_baja }}">
-                                            <i class="fa-solid fa-ban me-1"></i> Rechazar Solicitud
+                                            <i class="fa-solid fa-ban me-1"></i> Rechazar baja
                                         </button>
                                     @else
                                         <span class="text-muted">-</span>
@@ -184,8 +184,8 @@
                 const id = this.getAttribute('data-id');
 
                 Swal.fire({
-                    title: 'Rechazar solicitud de baja',
-                    text: '¿Está seguro de que desea rechazar esta solicitud de baja?',
+                    title: 'Rechazar baja pendiente',
+                    text: '¿Está seguro de que desea rechazar esta baja pendiente?',
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',

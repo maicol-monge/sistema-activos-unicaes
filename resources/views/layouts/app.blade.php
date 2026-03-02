@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Sistema Activos - UNICAES')</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -23,6 +24,9 @@
         body {
             font-family: 'Nunito', sans-serif;
             background-color: #f4f6f9;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         .navbar-custom {
@@ -74,6 +78,54 @@
             border-radius: 8px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
         }
+
+        .footer-custom {
+            background-color: var(--rojo-principal);
+            color: white;
+            margin-top: auto;
+            border-top: 4px solid var(--dorado);
+        }
+
+        .pagination {
+            gap: 0.35rem;
+            margin-bottom: 0;
+            align-items: center;
+        }
+
+        .pagination .page-item .page-link {
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            color: var(--rojo-principal);
+            font-weight: 700;
+            min-width: 2.3rem;
+            text-align: center;
+            background-color: #fff;
+            transition: all 0.2s ease;
+        }
+
+        .pagination .page-item .page-link:hover {
+            color: var(--rojo-oscuro);
+            border-color: var(--dorado);
+            background-color: rgba(237, 189, 63, 0.18);
+            transform: translateY(-1px);
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: var(--rojo-principal);
+            border-color: var(--rojo-principal);
+            color: var(--dorado);
+            box-shadow: 0 4px 10px rgba(126, 0, 1, 0.2);
+        }
+
+        .pagination .page-item.disabled .page-link {
+            background-color: #f5f6f8;
+            color: #9ca3af;
+            border-color: #e5e7eb;
+        }
+
+        .pagination .page-link:focus {
+            box-shadow: 0 0 0 0.2rem rgba(237, 189, 63, 0.35);
+        }
     </style>
 </head>
 
@@ -118,10 +170,12 @@
                             </li>
                             <li>
                                 <a class="dropdown-item" href="{{ route('bajas-activos.index') }}">
-                                    <i class="fa-solid fa-circle-down me-1"></i> Solicitudes de Baja
+                                    <i class="fa-solid fa-circle-down me-1"></i> Bajas de Activos
                                 </a>
                             </li>
-                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
                             <li>
                                 <a class="dropdown-item" href="{{ route('users.index') }}">
                                     <i class="fa-solid fa-users me-1"></i> Usuarios
@@ -173,11 +227,6 @@
                                     <i class="fa-solid fa-clipboard-check me-1"></i> Reportar Estado
                                 </a>
                             </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('bajas-activos.create') }}">
-                                    <i class="fa-solid fa-minus-circle me-1"></i> Solicitar Baja
-                                </a>
-                            </li>
                         </ul>
                     </li>
                     @endif
@@ -203,15 +252,7 @@
                     </li>
                     @endif
 
-                    @if(in_array($rol, ['ENCARGADO', 'INVENTARIADOR', 'DECANO']))
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('bajas-activos.create') }}">
-                            <i class="fa-solid fa-minus-circle me-1"></i> Solicitar Baja
-                        </a>
-                    </li>
-                    @endif
-
-                    @if($rol === 'DECANO')
+                    @if(in_array($rol, ['ADMIN', 'DECANO']))
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('reportes.index') }}">
                             <i class="fa-solid fa-chart-line me-1"></i> Reportes y Consultas
@@ -249,6 +290,15 @@
             </div>
         </div>
     </main>
+
+    <footer class="footer-custom py-4">
+        <div class="container text-center">
+            <h6 class="fw-bold mb-2">Universidad Católica de El Salvador</h6>
+            <p class="mb-0 small opacity-75">
+                &copy; {{ date('Y') }} Sistema de Gestión de Activos &bull; UNICAES
+            </p>
+        </div>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
