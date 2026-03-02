@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Sistema Activos - UNICAES')</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -169,7 +170,7 @@
                             </li>
                             <li>
                                 <a class="dropdown-item" href="{{ route('bajas-activos.index') }}">
-                                    <i class="fa-solid fa-circle-down me-1"></i> Solicitudes de Baja
+                                    <i class="fa-solid fa-circle-down me-1"></i> Bajas de Activos
                                 </a>
                             </li>
                             <li>
@@ -226,11 +227,6 @@
                                     <i class="fa-solid fa-clipboard-check me-1"></i> Reportar Estado
                                 </a>
                             </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('bajas-activos.create') }}">
-                                    <i class="fa-solid fa-minus-circle me-1"></i> Solicitar Baja
-                                </a>
-                            </li>
                         </ul>
                     </li>
                     @endif
@@ -256,15 +252,7 @@
                     </li>
                     @endif
 
-                    @if(in_array($rol, ['ENCARGADO', 'INVENTARIADOR', 'DECANO']))
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('bajas-activos.create') }}">
-                            <i class="fa-solid fa-minus-circle me-1"></i> Solicitar Baja
-                        </a>
-                    </li>
-                    @endif
-
-                    @if($rol === 'DECANO')
+                    @if(in_array($rol, ['ADMIN', 'DECANO']))
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('reportes.index') }}">
                             <i class="fa-solid fa-chart-line me-1"></i> Reportes y Consultas

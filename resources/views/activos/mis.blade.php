@@ -115,7 +115,17 @@
                 </select>
             </div>
 
-            <div class="col-md-3 d-flex justify-content-end gap-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label text-muted fw-bold mb-1">Estado</label>
+                <select name="estado_asignacion" class="form-select">
+                    <option value="ACEPTADO" @selected(($filtros['estado_asignacion'] ?? 'ACEPTADO') === 'ACEPTADO')>Asignado</option>
+                    <option value="DEVOLUCION" @selected(($filtros['estado_asignacion'] ?? 'ACEPTADO') === 'DEVOLUCION')>Devolución pendiente</option>
+                    <option value="CARGADO" @selected(($filtros['estado_asignacion'] ?? 'ACEPTADO') === 'CARGADO')>Devuelto</option>
+                    <option value="TODOS" @selected(($filtros['estado_asignacion'] ?? 'ACEPTADO') === 'TODOS')>Todos</option>
+                </select>
+            </div>
+
+            <div class="col-12 d-flex justify-content-end gap-2 align-items-end">
                 <a href="{{ route('activos.mis') }}" class="btn btn-light border text-muted">
                     <i class="fa-solid fa-broom me-1"></i> Limpiar
                 </a>
@@ -136,7 +146,8 @@
                 <th>Categoría</th>
                 <th>Tipo</th>
                 <th>Asignado por</th>
-                <th>Fecha de Aceptación</th>
+                <th>Estado</th>
+                <th>Fecha</th>
                 <th class="text-center pe-4">Acción</th>
             </tr>
         </thead>
@@ -155,13 +166,29 @@
                 <td>{{ $a->activo?->tipo ?? 'N/A' }}</td>
                 <td>{{ $a->usuarioAsignador?->nombre ?? 'N/A' }}</td>
                 <td>
-                    @if($a->fecha_respuesta)
-                    <span class="text-muted small">
-                        <i class="fa-regular fa-calendar-check me-1"></i>
-                        {{ \Carbon\Carbon::parse($a->fecha_respuesta)->format('d/m/Y H:i') }}
-                    </span>
+                    @if($a->estado_asignacion === 'ACEPTADO' && (int) $a->estado === 1)
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success">Asignado</span>
+                    @elseif($a->estado_asignacion === 'DEVOLUCION' && (int) $a->estado === 1)
+                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning">Devolución pendiente</span>
+                    @elseif($a->estado_asignacion === 'CARGADO' && (int) $a->estado === 0)
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary">Devuelto</span>
                     @else
-                    —
+                        <span class="badge bg-light text-muted border">{{ $a->estado_asignacion }}</span>
+                    @endif
+                </td>
+                <td>
+                    @if($a->estado_asignacion === 'CARGADO' && $a->fecha_respuesta)
+                        <span class="text-muted small">
+                            <i class="fa-regular fa-calendar-check me-1"></i>
+                            {{ \Carbon\Carbon::parse($a->fecha_respuesta)->format('d/m/Y H:i') }}
+                        </span>
+                    @elseif($a->fecha_respuesta)
+                        <span class="text-muted small">
+                            <i class="fa-regular fa-calendar-check me-1"></i>
+                            {{ \Carbon\Carbon::parse($a->fecha_respuesta)->format('d/m/Y H:i') }}
+                        </span>
+                    @else
+                        —
                     @endif
                 </td>
                 <td class="text-center pe-4">
@@ -169,25 +196,39 @@
                         <button
                             type="button"
                             class="btn btn-sm btn-comprobante js-comprobante-preview"
-                            title="Ver comprobante (PDF)"
+                            title="Ver comprobante de asignación (PDF)"
                             data-preview-url="{{ route('asignaciones.comprobante.preview', $a) }}"
                             data-download-url="{{ route('asignaciones.comprobante', $a) }}">
                             <i class="fa-solid fa-receipt"></i>
                         </button>
+
+                        @if($a->estado_asignacion === 'ACEPTADO' && (int) $a->estado === 1)
                         <form method="POST" action="{{ route('asignaciones.devolver', $a) }}" class="m-0 form-devolver">
                             @csrf
                             {{-- Input hidden donde el script depositará el motivo --}}
                             <input type="hidden" name="motivo_devolucion" class="input-motivo" value="">
-                            <button type="button" class="btn btn-sm btn-devolver fw-bold swal-devolver" title="Devolver">
+                            <button type="button" class="btn btn-sm btn-devolver fw-bold swal-devolver" title="Solicitar devolución">
                                 <i class="fa-solid fa-rotate-left"></i>
                             </button>
                         </form>
+                        @endif
+
+                        @if($a->estado_asignacion === 'CARGADO' && (int) $a->estado === 0)
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-comprobante js-comprobante-preview"
+                            title="Ver comprobante de devolución (PDF)"
+                            data-preview-url="{{ route('asignaciones.comprobante-devolucion.preview', $a) }}"
+                            data-download-url="{{ route('asignaciones.comprobante-devolucion', $a) }}">
+                            <i class="fa-solid fa-file-circle-check"></i>
+                        </button>
+                        @endif
                     </div>
                 </td>
             </tr>
             @empty
             <tr>
-                <td colspan="7" class="text-center py-5 text-muted">
+                <td colspan="8" class="text-center py-5 text-muted">
                     <i class="fa-solid fa-box-open fa-3x mb-3" style="color: #dee2e6;"></i>
                     <p class="mb-0">No se encontraron activos con los filtros seleccionados.</p>
                 </td>
