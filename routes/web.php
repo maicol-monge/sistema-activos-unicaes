@@ -47,6 +47,12 @@ Route::middleware(['auth', 'preventBack'])->group(function () {
             ->name('activos.rechazar');
         Route::post('/activos/{activo}/baja-directa', [ActivoController::class, 'bajaDirecta'])
             ->name('activos.baja-directa');
+        Route::get('/activos/pdf', [ActivoController::class, 'inventarioPdf'])
+            ->name('activos.pdf');
+        Route::get('/activos/pdf/check', [ActivoController::class, 'inventarioPdfCheck'])
+            ->name('activos.pdf.check');
+        Route::get('/activos/pdf/preview', [ActivoController::class, 'inventarioPdfPreview'])
+            ->name('activos.pdf.preview');
         Route::get('/activos/{activo}/historial', [ActivoController::class, 'historial'])
             ->name('activos.historial');
         Route::get('/activos/{activo}/historial/pdf', [ActivoController::class, 'descargarHistorialPdf'])
@@ -91,10 +97,25 @@ Route::middleware(['auth', 'preventBack'])->group(function () {
 
         Route::get('/asignaciones/{asignacion}/comprobante/preview', [AsignacionActivoController::class, 'comprobantePreview'])
             ->name('asignaciones.comprobante.preview');
+
+        // Comprobante de devolución (cuando la devolución ya fue aceptada / cerrada)
+        Route::get('/asignaciones/{asignacion}/comprobante-devolucion', [AsignacionActivoController::class, 'comprobanteDevolucion'])
+            ->name('asignaciones.comprobante-devolucion');
+        Route::get('/asignaciones/{asignacion}/comprobante-devolucion/preview', [AsignacionActivoController::class, 'comprobanteDevolucionPreview'])
+            ->name('asignaciones.comprobante-devolucion.preview');
     });
 
-    Route::middleware('role:DECANO')->group(function () {
-        Route::get('/reportes', fn() => 'Reportes')->name('reportes.index');
+    Route::middleware('role:ADMIN,DECANO')->group(function () {
+        Route::get('/reportes', [ReporteActivoController::class, 'decanoIndex'])
+            ->name('reportes.index');
+        Route::post('/reportes/ia-consulta', [ReporteActivoController::class, 'decanoIaConsulta'])
+            ->name('reportes.ia-consulta');
+        Route::get('/reportes/pdf', [ReporteActivoController::class, 'decanoPdf'])
+            ->name('reportes.pdf');
+        Route::get('/reportes/csv', [ReporteActivoController::class, 'decanoCsv'])
+            ->name('reportes.csv');
+        Route::get('/reportes/excel', [ReporteActivoController::class, 'decanoExcel'])
+            ->name('reportes.excel');
     });
 
     Route::middleware(['auth', 'role:ADMIN,INVENTARIADOR'])->group(function () {
@@ -110,16 +131,10 @@ Route::middleware(['auth', 'preventBack'])->group(function () {
         Route::post('/asignaciones', [AsignacionActivoController::class, 'store'])->name('asignaciones.store');
     });
 
-    // ADMIN, ENCARGADO, INVENTARIADOR y DECANO pueden crear solicitudes de baja
-    Route::middleware('role:ADMIN,ENCARGADO,INVENTARIADOR,DECANO')->group(function () {
-        Route::get('/bajas-activos/create', [BajaActivoController::class, 'create'])
-            ->name('bajas-activos.create');
-        Route::post('/bajas-activos', [BajaActivoController::class, 'store'])
-            ->name('bajas-activos.store');
-    });
-
     Route::middleware('role:ADMIN')->group(function () {
         Route::resource('reportes-activos', ReporteActivoController::class);
+        Route::get('/reportes-activos/pdf', [ReporteActivoController::class, 'adminPdf'])
+            ->name('reportes-activos.pdf');
         Route::resource('movimientos-activos', MovimientoActivoController::class);
 
         // Solo ADMIN ve listado completo de asignaciones y gestiona bajas

@@ -26,6 +26,8 @@ class ActivoController extends Controller
             'tipo' => ['nullable', Rule::in(['FIJO', 'INTANGIBLE'])],
             'condicion' => ['nullable', Rule::in(['BUENO', 'DANIADO', 'REGULAR'])],
             'id_categoria_activo' => ['nullable', 'integer', 'exists:categorias_activos,id_categoria_activo'],
+            'fecha_desde' => ['nullable', 'date', 'after_or_equal:1982-04-13', 'before_or_equal:today'],
+            'fecha_hasta' => ['nullable', 'date', 'after_or_equal:1982-04-13', 'before_or_equal:today'],
         ]);
 
         $activos = Activo::query()
@@ -47,6 +49,8 @@ class ActivoController extends Controller
             ->when(!empty($filtros['tipo']), fn($query) => $query->where('tipo', $filtros['tipo']))
             ->when(!empty($filtros['condicion']), fn($query) => $query->where('condicion', $filtros['condicion']))
             ->when(!empty($filtros['id_categoria_activo']), fn($query) => $query->where('id_categoria_activo', $filtros['id_categoria_activo']))
+            ->when(!empty($filtros['fecha_desde']), fn($query) => $query->whereDate('fecha_adquisicion', '>=', $filtros['fecha_desde']))
+            ->when(!empty($filtros['fecha_hasta']), fn($query) => $query->whereDate('fecha_adquisicion', '<=', $filtros['fecha_hasta']))
             ->orderBy('id_activo', 'desc')
             ->paginate(10)
             ->withQueryString();
@@ -57,6 +61,209 @@ class ActivoController extends Controller
             ->get(['id_categoria_activo', 'nombre']);
 
         return view('activos.index', compact('activos', 'categorias', 'filtros'));
+    }
+
+    /**
+     * Exporta en PDF el inventario de activos según los filtros actuales (solo ADMIN).
+     */
+    public function inventarioPdf(Request $request)
+    {
+        // Aumentar límite de memoria solo para esta exportación
+        @ini_set('memory_limit', '512M');
+
+        $filtros = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'estado' => ['nullable', Rule::in(['PENDIENTE', 'APROBADO', 'RECHAZADO', 'BAJA'])],
+            'tipo' => ['nullable', Rule::in(['FIJO', 'INTANGIBLE'])],
+            'condicion' => ['nullable', Rule::in(['BUENO', 'DANIADO', 'REGULAR'])],
+            'id_categoria_activo' => ['nullable', 'integer', 'exists:categorias_activos,id_categoria_activo'],
+            'fecha_desde' => ['nullable', 'date', 'after_or_equal:1982-04-13', 'before_or_equal:today'],
+            'fecha_hasta' => ['nullable', 'date', 'after_or_equal:1982-04-13', 'before_or_equal:today'],
+        ]);
+
+        // Nombre legible para el filtro de categoría (si aplica)
+        $categoriaFiltroNombre = null;
+        if (!empty($filtros['id_categoria_activo'])) {
+            $categoriaFiltroNombre = CategoriaActivo::where('id_categoria_activo', $filtros['id_categoria_activo'])
+                ->value('nombre');
+        }
+
+        // Construimos la query base una sola vez para poder contar y luego obtener
+        $query = Activo::query()
+            ->when(!empty($filtros['q']), function ($query) use ($filtros) {
+                $texto = trim($filtros['q']);
+                $query->where(function ($sub) use ($texto) {
+                    $sub->where('codigo', 'like', "%{$texto}%")
+                        ->orWhere('nombre', 'like', "%{$texto}%")
+                        ->orWhere('serial', 'like', "%{$texto}%")
+                        ->orWhere('marca', 'like', "%{$texto}%")
+                        ->orWhere('descripcion', 'like', "%{$texto}%")
+                        ->orWhereHas('categoria', function ($q) use ($texto) {
+                            $q->where('nombre', 'like', "%{$texto}%");
+                        });
+                });
+            })
+            ->when(!empty($filtros['estado']), fn($q) => $q->where('estado', $filtros['estado']))
+            ->when(!empty($filtros['tipo']), fn($q) => $q->where('tipo', $filtros['tipo']))
+            ->when(!empty($filtros['condicion']), fn($q) => $q->where('condicion', $filtros['condicion']))
+            ->when(!empty($filtros['id_categoria_activo']), fn($q) => $q->where('id_categoria_activo', $filtros['id_categoria_activo']))
+            ->when(!empty($filtros['fecha_desde']), fn($q) => $q->whereDate('fecha_adquisicion', '>=', $filtros['fecha_desde']))
+            ->when(!empty($filtros['fecha_hasta']), fn($q) => $q->whereDate('fecha_adquisicion', '<=', $filtros['fecha_hasta']));
+
+        // Límite de seguridad para no saturar DomPDF con listados enormes
+        $totalFiltrados = (clone $query)->count();
+        // Límite conservador para que DomPDF no se quede sin memoria
+        $maxRegistrosPdf = 800;
+
+        if ($totalFiltrados > $maxRegistrosPdf) {
+            return back()->with('err', "El listado es muy grande ({$totalFiltrados} registros). Refina los filtros o exporta por partes (máximo {$maxRegistrosPdf} por PDF).");
+        }
+
+        $activos = $query
+            ->with(['categoria', 'registrador', 'aprobador'])
+            ->orderBy('id_activo', 'desc')
+            ->get();
+
+        $usuario = auth()->user();
+        $ahora = now();
+
+        $pdf = Pdf::loadView('activos.inventario_pdf', [
+            'activos' => $activos,
+            'filtros' => $filtros,
+            'usuario' => $usuario,
+            'generadoEn' => $ahora,
+            'categoriaFiltroNombre' => $categoriaFiltroNombre,
+        ])->setPaper('letter', 'landscape');
+
+        $fileName = 'inventario_activos_' . $ahora->format('Ymd_His') . '.pdf';
+
+        return $pdf->download($fileName);
+    }
+
+    /**
+     * Verifica si el inventario filtrado es apto para generar PDF (tamaño).
+     */
+    public function inventarioPdfCheck(Request $request)
+    {
+        $filtros = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'estado' => ['nullable', Rule::in(['PENDIENTE', 'APROBADO', 'RECHAZADO', 'BAJA'])],
+            'tipo' => ['nullable', Rule::in(['FIJO', 'INTANGIBLE'])],
+            'condicion' => ['nullable', Rule::in(['BUENO', 'DANIADO', 'REGULAR'])],
+            'id_categoria_activo' => ['nullable', 'integer', 'exists:categorias_activos,id_categoria_activo'],
+            'fecha_desde' => ['nullable', 'date', 'after_or_equal:1982-04-13', 'before_or_equal:today'],
+            'fecha_hasta' => ['nullable', 'date', 'after_or_equal:1982-04-13', 'before_or_equal:today'],
+        ]);
+
+        $query = Activo::query()
+            ->when(!empty($filtros['q']), function ($query) use ($filtros) {
+                $texto = trim($filtros['q']);
+                $query->where(function ($sub) use ($texto) {
+                    $sub->where('codigo', 'like', "%{$texto}%")
+                        ->orWhere('nombre', 'like', "%{$texto}%")
+                        ->orWhere('serial', 'like', "%{$texto}%")
+                        ->orWhere('marca', 'like', "%{$texto}%")
+                        ->orWhere('descripcion', 'like', "%{$texto}%")
+                        ->orWhereHas('categoria', function ($q) use ($texto) {
+                            $q->where('nombre', 'like', "%{$texto}%");
+                        });
+                });
+            })
+            ->when(!empty($filtros['estado']), fn($q) => $q->where('estado', $filtros['estado']))
+            ->when(!empty($filtros['tipo']), fn($q) => $q->where('tipo', $filtros['tipo']))
+            ->when(!empty($filtros['condicion']), fn($q) => $q->where('condicion', $filtros['condicion']))
+            ->when(!empty($filtros['id_categoria_activo']), fn($q) => $q->where('id_categoria_activo', $filtros['id_categoria_activo']))
+            ->when(!empty($filtros['fecha_desde']), fn($q) => $q->whereDate('fecha_adquisicion', '>=', $filtros['fecha_desde']))
+            ->when(!empty($filtros['fecha_hasta']), fn($q) => $q->whereDate('fecha_adquisicion', '<=', $filtros['fecha_hasta']));
+
+        $totalFiltrados = (clone $query)->count();
+        $maxRegistrosPdf = 800;
+
+        if ($totalFiltrados > $maxRegistrosPdf) {
+            return response()->json([
+                'ok' => false,
+                'total' => $totalFiltrados,
+                'max' => $maxRegistrosPdf,
+                'message' => "El listado es muy grande ({$totalFiltrados} registros). Refina los filtros o exporta por partes (máximo {$maxRegistrosPdf} por PDF).",
+            ]);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'total' => $totalFiltrados,
+            'max' => $maxRegistrosPdf,
+        ]);
+    }
+
+    /**
+     * Previsualiza en el navegador el PDF del inventario de activos (solo ADMIN).
+     */
+    public function inventarioPdfPreview(Request $request)
+    {
+        // Aumentar límite de memoria solo para esta previsualización
+        @ini_set('memory_limit', '512M');
+
+        $filtros = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'estado' => ['nullable', Rule::in(['PENDIENTE', 'APROBADO', 'RECHAZADO', 'BAJA'])],
+            'tipo' => ['nullable', Rule::in(['FIJO', 'INTANGIBLE'])],
+            'condicion' => ['nullable', Rule::in(['BUENO', 'DANIADO', 'REGULAR'])],
+            'id_categoria_activo' => ['nullable', 'integer', 'exists:categorias_activos,id_categoria_activo'],
+            'fecha_desde' => ['nullable', 'date', 'after_or_equal:1982-04-13', 'before_or_equal:today'],
+            'fecha_hasta' => ['nullable', 'date', 'after_or_equal:1982-04-13', 'before_or_equal:today'],
+        ]);
+
+        $categoriaFiltroNombre = null;
+        if (!empty($filtros['id_categoria_activo'])) {
+            $categoriaFiltroNombre = CategoriaActivo::where('id_categoria_activo', $filtros['id_categoria_activo'])
+                ->value('nombre');
+        }
+
+        $query = Activo::query()
+            ->when(!empty($filtros['q']), function ($query) use ($filtros) {
+                $texto = trim($filtros['q']);
+                $query->where(function ($sub) use ($texto) {
+                    $sub->where('codigo', 'like', "%{$texto}%")
+                        ->orWhere('nombre', 'like', "%{$texto}%")
+                        ->orWhere('serial', 'like', "%{$texto}%")
+                        ->orWhere('marca', 'like', "%{$texto}%")
+                        ->orWhere('descripcion', 'like', "%{$texto}%")
+                        ->orWhereHas('categoria', function ($q) use ($texto) {
+                            $q->where('nombre', 'like', "%{$texto}%");
+                        });
+                });
+            })
+            ->when(!empty($filtros['estado']), fn($q) => $q->where('estado', $filtros['estado']))
+            ->when(!empty($filtros['tipo']), fn($q) => $q->where('tipo', $filtros['tipo']))
+            ->when(!empty($filtros['condicion']), fn($q) => $q->where('condicion', $filtros['condicion']))
+            ->when(!empty($filtros['id_categoria_activo']), fn($q) => $q->where('id_categoria_activo', $filtros['id_categoria_activo']))
+            ->when(!empty($filtros['fecha_desde']), fn($q) => $q->whereDate('fecha_adquisicion', '>=', $filtros['fecha_desde']))
+            ->when(!empty($filtros['fecha_hasta']), fn($q) => $q->whereDate('fecha_adquisicion', '<=', $filtros['fecha_hasta']));
+
+        $totalFiltrados = (clone $query)->count();
+        $maxRegistrosPdf = 800;
+
+        if ($totalFiltrados > $maxRegistrosPdf) {
+            return back()->with('err', "El listado es muy grande ({$totalFiltrados} registros). Refina los filtros o exporta por partes (máximo {$maxRegistrosPdf} por PDF).");
+        }
+
+        $activos = $query
+            ->with(['categoria', 'registrador', 'aprobador'])
+            ->orderBy('id_activo', 'desc')
+            ->get();
+
+        $usuario = auth()->user();
+        $ahora = now();
+
+        $pdf = Pdf::loadView('activos.inventario_pdf', [
+            'activos' => $activos,
+            'filtros' => $filtros,
+            'usuario' => $usuario,
+            'generadoEn' => $ahora,
+            'categoriaFiltroNombre' => $categoriaFiltroNombre,
+        ])->setPaper('letter', 'landscape');
+
+        return $pdf->stream('inventario_activos_preview.pdf');
     }
 
     public function create()
@@ -283,6 +490,15 @@ class ActivoController extends Controller
             return back()->with('err', 'Solo se pueden dar de baja directa activos en estado APROBADO.');
         }
 
+        // Verificar que el activo no tenga asignaciones activas (debe estar devuelto o sin asignaciones)
+        $tieneAsignacionesActivas = AsignacionActivo::where('id_activo', $activo->id_activo)
+            ->where('estado', 1)
+            ->exists();
+
+        if ($tieneAsignacionesActivas) {
+            return back()->with('err', 'No se puede dar de baja un activo que aún tiene asignaciones activas o pendientes de devolución.');
+        }
+
         $data = $request->validate([
             'motivo_baja' => ['required', 'string', 'max:255'],
         ], [
@@ -298,27 +514,10 @@ class ActivoController extends Controller
                 'estado' => 'APROBADA',
             ]);
 
-            // Cambiar estado del activo
+            // Cambiar estado del activo (baja definitiva)
             $activo->estado = 'BAJA';
             $activo->observaciones = $data['motivo_baja'];
             $activo->save();
-
-            // Cerrar cualquier asignación activa asociada a este activo
-            $asignacionesActivas = AsignacionActivo::where('id_activo', $activo->id_activo)
-                ->where('estado', 1)
-                ->get();
-
-            foreach ($asignacionesActivas as $asignacion) {
-                // Si estaba pendiente, se marca como RECHAZADO; si no, se marca como CARGADO (cerrada)
-                $nuevoEstadoAsignacion = $asignacion->estado_asignacion === 'PENDIENTE'
-                    ? 'RECHAZADO'
-                    : 'CARGADO';
-
-                $asignacion->estado_asignacion = $nuevoEstadoAsignacion;
-                $asignacion->estado = 0;
-                $asignacion->fecha_respuesta = now();
-                $asignacion->save();
-            }
 
             // Registrar movimiento de baja
             MovimientoActivo::create([
